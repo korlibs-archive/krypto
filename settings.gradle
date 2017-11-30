@@ -1,0 +1,15 @@
+rootProject.name = 'krypto-root'
+
+include(
+		'krypto-common',
+		'krypto',
+		'krypto-js',
+)
+
+def register(String base) {
+	findProject(":$base-common")?.projectDir = file("$base/common")
+	findProject(":$base")?.projectDir = file("$base/jvm")
+	findProject(":$base-js")?.projectDir = file("$base/js")
+}
+
+register('krypto')
