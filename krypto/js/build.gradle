@@ -2,4 +2,5 @@ apply plugin: 'kotlin-platform-js'
 
 dependencies {
 	expectedBy project(":krypto-common")
+	compile "com.soywiz:kmem-js:$kmemVersion"
 }

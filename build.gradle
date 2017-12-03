@@ -1,6 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 buildscript {
+	ext.kmemVersion = '0.3.0'
 	ext.kotlinVersion = '1.2.0'
 
 	repositories {
