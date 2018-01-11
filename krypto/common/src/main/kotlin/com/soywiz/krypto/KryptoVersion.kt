@@ -1,3 +1,3 @@
 package com.soywiz.krypto
 
-val KRYPTO_VERSION = "0.3.1-SNAPSHOT"
+internal const val KRYPTO_VERSION = "0.4.0"
