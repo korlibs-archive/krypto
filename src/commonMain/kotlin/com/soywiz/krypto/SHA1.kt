@@ -1,16 +1,13 @@
 package com.soywiz.krypto
 
-import com.soywiz.kmem.*
-import kotlin.math.ceil
+import kotlin.math.*
 
 object SHA1 {
-	private class Uint32ArrayBigEndian(val bytes: UByteArray) {
-		val ints = MemBufferWrap(bytes.data).asInt32Buffer()
+	private class Uint32ArrayBigEndian(val bytes: ByteArray) {
+		constructor(length: Int) : this(ByteArray(length * 4))
 
-		constructor(length: Int) : this(UByteArray(ByteArray(length * 4)))
-
-		operator fun get(index: Int): Int = ints[index].reverseBytes()
-		operator fun set(index: Int, value: Int) = run { ints[index] = value.reverseBytes() }
+		operator fun get(index: Int): Int = bytes.readS32_be(index * 4)
+		operator fun set(index: Int, value: Int) = bytes.write32_be(index * 4, value)
 	}
 
 	private const val H0: Int = 0x67452301L.toInt()
@@ -25,8 +22,7 @@ object SHA1 {
 	private const val K6080: Int = 0xCA62C1D6L.toInt()
 
 	fun hash(input: ByteArray): ByteArray {
-		val uinput = UByteArray(input)
-		val inputBits: Long = uinput.size.toLong() * 8
+		val inputBits: Long = input.size.toLong() * 8
 		val minBits = inputBits + 65
 		val bits = ceil((minBits.toDouble() / 512.0)).toInt() shl 9
 		val bytes = bits / 8
@@ -40,8 +36,8 @@ object SHA1 {
 		var h3 = H3
 		var h4 = H4
 
-		for (i in 0 until uinput.size) s.bytes[i] = uinput[i]
-		s.bytes[uinput.size] = 0x80
+		for (i in 0 until input.size) s.bytes[i] = input[i]
+		s.bytes[input.size] = 0x80.toByte()
 		s[slen - 2] = (inputBits ushr 32).toInt()
 		s[slen - 1] = (inputBits ushr 0).toInt()
 
@@ -88,11 +84,13 @@ object SHA1 {
 
 	private fun Int.rotateLeft(bits: Int): Int = ((this shl bits) or (this ushr (32 - bits)))
 
-	private fun Int.reverseBytes(): Int {
-		val v0 = ((this ushr 0) and 0xFF)
-		val v1 = ((this ushr 8) and 0xFF)
-		val v2 = ((this ushr 16) and 0xFF)
-		val v3 = ((this ushr 24) and 0xFF)
-		return (v0 shl 24) or (v1 shl 16) or (v2 shl 8) or (v3 shl 0)
+	private fun Int.extract8(offset: Int): Int = (this ushr offset) and 0xFF
+	private fun ByteArray.write32_be(o: Int, v: Int) = run {
+		this[o + 3] = v.extract8(0).toByte(); this[o + 2] = v.extract8(8).toByte(); this[o + 1] =
+			v.extract8(16).toByte(); this[o + 0] = v.extract8(24).toByte()
 	}
+
+	private fun ByteArray.readU8(o: Int): Int = this[o].toInt() and 0xFF
+	private fun ByteArray.readS32_be(o: Int): Int =
+		(readU8(o + 3) shl 0) or (readU8(o + 2) shl 8) or (readU8(o + 1) shl 16) or (readU8(o + 0) shl 24)
 }

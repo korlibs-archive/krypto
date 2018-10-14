@@ -24,10 +24,12 @@ class AES(val keyWords: IntArray) {
 				var t = keySchedule[ksRow - 1]
 				if (0 == (ksRow % keySize)) {
 					t = (t shl 8) or (t ushr 24)
-					t = (SBOX[t ushr 24] shl 24) or (SBOX[(t ushr 16) and 0xff] shl 16) or (SBOX[(t ushr 8) and 0xff] shl 8) or SBOX[t and 0xff]
+					t = (SBOX[t ushr 24] shl 24) or (SBOX[(t ushr 16) and 0xff] shl 16) or
+							(SBOX[(t ushr 8) and 0xff] shl 8) or SBOX[t and 0xff]
 					t = t xor (RCON[(ksRow / keySize) or 0] shl 24)
 				} else if (keySize > 6 && ksRow % keySize == 4) {
-					t = (SBOX[t ushr 24] shl 24) or (SBOX[(t ushr 16) and 0xff] shl 16) or (SBOX[(t ushr 8) and 0xff] shl 8) or SBOX[t and 0xff]
+					t = (SBOX[t ushr 24] shl 24) or (SBOX[(t ushr 16) and 0xff] shl 16) or
+							(SBOX[(t ushr 8) and 0xff] shl 8) or SBOX[t and 0xff]
 				}
 				keySchedule[ksRow] = keySchedule[ksRow - keySize] xor t
 			}
@@ -36,7 +38,8 @@ class AES(val keyWords: IntArray) {
 		for (invKsRow in 0 until ksRows) {
 			val ksRow = ksRows - invKsRow
 			val t = if ((invKsRow % 4) != 0) keySchedule[ksRow] else keySchedule[ksRow - 4]
-			invKeySchedule[invKsRow] = if (invKsRow < 4 || ksRow <= 4) t else INV_SUB_MIX_0[SBOX[t ushr 24]] xor INV_SUB_MIX_1[SBOX[(t ushr 16) and 0xff]] xor INV_SUB_MIX_2[SBOX[(t ushr 8) and 0xff]] xor INV_SUB_MIX_3[SBOX[t and 0xff]]
+			invKeySchedule[invKsRow] =
+					if (invKsRow < 4 || ksRow <= 4) t else INV_SUB_MIX_0[SBOX[t ushr 24]] xor INV_SUB_MIX_1[SBOX[(t ushr 16) and 0xff]] xor INV_SUB_MIX_2[SBOX[(t ushr 8) and 0xff]] xor INV_SUB_MIX_3[SBOX[t and 0xff]]
 		}
 	}
 
@@ -48,13 +51,31 @@ class AES(val keyWords: IntArray) {
 		var t = M[offset + 1]
 		M[offset + 1] = M[offset + 3]
 		M[offset + 3] = t
-		this.doCryptBlock(M, offset, this.invKeySchedule, INV_SUB_MIX_0, INV_SUB_MIX_1, INV_SUB_MIX_2, INV_SUB_MIX_3, INV_SBOX)
+		this.doCryptBlock(
+			M,
+			offset,
+			this.invKeySchedule,
+			INV_SUB_MIX_0,
+			INV_SUB_MIX_1,
+			INV_SUB_MIX_2,
+			INV_SUB_MIX_3,
+			INV_SBOX
+		)
 		t = M[offset + 1]
 		M[offset + 1] = M[offset + 3]
 		M[offset + 3] = t
 	}
 
-	private fun doCryptBlock(M: IntArray, offset: Int, keySchedule: IntArray, SUB_MIX_0: IntArray, SUB_MIX_1: IntArray, SUB_MIX_2: IntArray, SUB_MIX_3: IntArray, SBOX: IntArray) {
+	private fun doCryptBlock(
+		M: IntArray,
+		offset: Int,
+		keySchedule: IntArray,
+		SUB_MIX_0: IntArray,
+		SUB_MIX_1: IntArray,
+		SUB_MIX_2: IntArray,
+		SUB_MIX_3: IntArray,
+		SBOX: IntArray
+	) {
 		var s0 = M[offset + 0] xor keySchedule[0]
 		var s1 = M[offset + 1] xor keySchedule[1]
 		var s2 = M[offset + 2] xor keySchedule[2]
@@ -62,17 +83,25 @@ class AES(val keyWords: IntArray) {
 		var ksRow = 4
 
 		for (round in 1 until numRounds) {
-			val t0 = SUB_MIX_0[s0 ushr 24] xor SUB_MIX_1[(s1 ushr 16) and 0xff] xor SUB_MIX_2[(s2 ushr 8) and 0xff] xor SUB_MIX_3[(s3 ushr 0) and 0xff] xor keySchedule[ksRow++]
-			val t1 = SUB_MIX_0[s1 ushr 24] xor SUB_MIX_1[(s2 ushr 16) and 0xff] xor SUB_MIX_2[(s3 ushr 8) and 0xff] xor SUB_MIX_3[(s0 ushr 0) and 0xff] xor keySchedule[ksRow++]
-			val t2 = SUB_MIX_0[s2 ushr 24] xor SUB_MIX_1[(s3 ushr 16) and 0xff] xor SUB_MIX_2[(s0 ushr 8) and 0xff] xor SUB_MIX_3[(s1 ushr 0) and 0xff] xor keySchedule[ksRow++]
-			val t3 = SUB_MIX_0[s3 ushr 24] xor SUB_MIX_1[(s0 ushr 16) and 0xff] xor SUB_MIX_2[(s1 ushr 8) and 0xff] xor SUB_MIX_3[(s2 ushr 0) and 0xff] xor keySchedule[ksRow++]
+			val t0 =
+				SUB_MIX_0[s0 ushr 24] xor SUB_MIX_1[(s1 ushr 16) and 0xff] xor SUB_MIX_2[(s2 ushr 8) and 0xff] xor SUB_MIX_3[(s3 ushr 0) and 0xff] xor keySchedule[ksRow++]
+			val t1 =
+				SUB_MIX_0[s1 ushr 24] xor SUB_MIX_1[(s2 ushr 16) and 0xff] xor SUB_MIX_2[(s3 ushr 8) and 0xff] xor SUB_MIX_3[(s0 ushr 0) and 0xff] xor keySchedule[ksRow++]
+			val t2 =
+				SUB_MIX_0[s2 ushr 24] xor SUB_MIX_1[(s3 ushr 16) and 0xff] xor SUB_MIX_2[(s0 ushr 8) and 0xff] xor SUB_MIX_3[(s1 ushr 0) and 0xff] xor keySchedule[ksRow++]
+			val t3 =
+				SUB_MIX_0[s3 ushr 24] xor SUB_MIX_1[(s0 ushr 16) and 0xff] xor SUB_MIX_2[(s1 ushr 8) and 0xff] xor SUB_MIX_3[(s2 ushr 0) and 0xff] xor keySchedule[ksRow++]
 			s0 = t0; s1 = t1; s2 = t2; s3 = t3
 		}
 
-		val t0 = ((SBOX[s0 ushr 24] shl 24) or (SBOX[(s1 ushr 16) and 0xff] shl 16) or (SBOX[(s2 ushr 8) and 0xff] shl 8) or SBOX[(s3 ushr 0) and 0xff]) xor keySchedule[ksRow++]
-		val t1 = ((SBOX[s1 ushr 24] shl 24) or (SBOX[(s2 ushr 16) and 0xff] shl 16) or (SBOX[(s3 ushr 8) and 0xff] shl 8) or SBOX[(s0 ushr 0) and 0xff]) xor keySchedule[ksRow++]
-		val t2 = ((SBOX[s2 ushr 24] shl 24) or (SBOX[(s3 ushr 16) and 0xff] shl 16) or (SBOX[(s0 ushr 8) and 0xff] shl 8) or SBOX[(s1 ushr 0) and 0xff]) xor keySchedule[ksRow++]
-		val t3 = ((SBOX[s3 ushr 24] shl 24) or (SBOX[(s0 ushr 16) and 0xff] shl 16) or (SBOX[(s1 ushr 8) and 0xff] shl 8) or SBOX[(s2 ushr 0) and 0xff]) xor keySchedule[ksRow++]
+		val t0 =
+			((SBOX[s0 ushr 24] shl 24) or (SBOX[(s1 ushr 16) and 0xff] shl 16) or (SBOX[(s2 ushr 8) and 0xff] shl 8) or SBOX[(s3 ushr 0) and 0xff]) xor keySchedule[ksRow++]
+		val t1 =
+			((SBOX[s1 ushr 24] shl 24) or (SBOX[(s2 ushr 16) and 0xff] shl 16) or (SBOX[(s3 ushr 8) and 0xff] shl 8) or SBOX[(s0 ushr 0) and 0xff]) xor keySchedule[ksRow++]
+		val t2 =
+			((SBOX[s2 ushr 24] shl 24) or (SBOX[(s3 ushr 16) and 0xff] shl 16) or (SBOX[(s0 ushr 8) and 0xff] shl 8) or SBOX[(s1 ushr 0) and 0xff]) xor keySchedule[ksRow++]
+		val t3 =
+			((SBOX[s3 ushr 24] shl 24) or (SBOX[(s0 ushr 16) and 0xff] shl 16) or (SBOX[(s1 ushr 8) and 0xff] shl 8) or SBOX[(s2 ushr 0) and 0xff]) xor keySchedule[ksRow++]
 		M[offset + 0] = t0; M[offset + 1] = t1; M[offset + 2] = t2; M[offset + 3] = t3
 	}
 

@@ -1,7 +1,6 @@
 package com.soywiz.krypto
 
-import org.junit.Test
-import kotlin.test.assertEquals
+import kotlin.test.*
 
 class AESTest {
 	@Test
