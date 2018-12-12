@@ -4,13 +4,6 @@ matrix:
     language: java
     jdk: oraclejdk8
     env: KBUILD=linux
-    install:
-    - nvm install 8
-    - nvm use 8
-    - node --version
-    - npm -g install mocha
-    - which node
-    - which mocha
     script:
     - ./gradlew -s -i check build
   - os: windows
@@ -18,19 +11,14 @@ matrix:
     language: shell # java is not supported but jdk is installed
     script:
     - powershell -Command "cmd /c travis_win.bat"
-  - os: osx
-    env: KBUILD=macos
-    language: java
-    jdk: oraclejdk8
-    install:
-    - nvm install 8
-    - nvm use 8
-    - node --version
-    - npm -g install mocha
-    - which node
-    - which mocha
-    script:
-    - ./gradlew -s -i check build
+#  - os: osx
+#    env: KBUILD=macos
+#    language: java
+#    jdk: openjdk10
+#    script:
+#    - ./gradlew -s -i check build
+
+# https://confluence.atlassian.com/kb/unable-to-connect-to-ssl-services-due-to-pkix-path-building-failed-779355358.html
 
 #before_cache:
 #  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
