@@ -3,7 +3,9 @@ matrix:
   - os: linux
     language: java
     jdk: oraclejdk8
-    env: KBUILD=linux
+    env:
+      KBUILD=linux
+      JAVA_OPTS=-Xmx2g
     script:
     - ./gradlew -s -i check build
   - os: windows
@@ -11,22 +13,14 @@ matrix:
     language: shell # java is not supported but jdk is installed
     script:
     - powershell -Command "cmd /c travis_win.bat"
-#  - os: osx
-#    env: KBUILD=macos
-#    language: java
-#    jdk: openjdk10
-#    script:
-#    - ./gradlew -s -i check build
+  - os: osx
+    env:
+      KBUILD=macos
+      JAVA_OPTS=-Xmx2g
+    language: java
+    jdk: openjdk10
+    before_install:
+    - cp $(/usr/libexec/java_home)/lib/security/cacerts "${JAVA_HOME}/lib/security/cacerts"
+    script:
+    - ./gradlew -s -i check build
 
-# https://confluence.atlassian.com/kb/unable-to-connect-to-ssl-services-due-to-pkix-path-building-failed-779355358.html
-
-#before_cache:
-#  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-#  - rm -f $HOME/.gradle-linux/caches/modules-2/modules-2.lock
-#  - rm -f $HOME/.gradle-win/caches/modules-2/modules-2.lock
-#
-#cache:
-#  directories:
-#    - $HOME/.gradle/caches/
-#    - $HOME/.gradle/wrapper/
-#    - $HOME/.konan
