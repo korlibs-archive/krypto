@@ -5,10 +5,8 @@ import com.soywiz.krypto.internal.readS32_be
 import com.soywiz.krypto.internal.rotateLeft
 import com.soywiz.krypto.internal.rotateRight
 
-class SHA1 : BaseHash(chunkSize = 64, digestSize = 20) {
-    companion object : HashProvider<SHA1> {
-        override fun create(): SHA1 = SHA1()
-
+class SHA1 : Hash(chunkSize = 64, digestSize = 20) {
+    companion object : HashFactory({ SHA1() }) {
         private val H = intArrayOf(
             0x67452301L.toInt(),
             0xEFCDAB89L.toInt(),
@@ -72,10 +70,8 @@ class SHA1 : BaseHash(chunkSize = 64, digestSize = 20) {
 }
 
 
-class SHA256 : BaseHash(chunkSize = 64, digestSize = 32) {
-    companion object : HashProvider<SHA256> {
-        override fun create(): SHA256 = SHA256()
-
+class SHA256 : Hash(chunkSize = 64, digestSize = 32) {
+    companion object : HashFactory({ SHA256() }) {
         private val H = intArrayOf(
             0x6a09e667, -0x4498517b, 0x3c6ef372, -0x5ab00ac6,
             0x510e527f, -0x64fa9774, 0x1f83d9ab, 0x5be0cd19

@@ -4,12 +4,10 @@ import com.soywiz.krypto.internal.rotateLeft
 import kotlin.math.abs
 import kotlin.math.sin
 
-class MD5 : BaseHash(chunkSize = 64, digestSize = 16) {
-    companion object : HashProvider<MD5> {
+class MD5 : Hash(chunkSize = 64, digestSize = 16) {
+    companion object : HashFactory({ MD5() }) {
         private val S = intArrayOf(7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21)
         private val T = IntArray(64) { ((1L shl 32) * abs(sin(1.0 + it))).toLong().toInt() }
-
-        override fun create(): MD5 = MD5()
     }
 
     private val r = IntArray(4)
