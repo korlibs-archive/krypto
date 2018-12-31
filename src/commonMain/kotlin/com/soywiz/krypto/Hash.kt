@@ -12,7 +12,10 @@ abstract class Hash(val chunkSize: Int, val digestSize: Int) {
     private var writtenInChunk = 0
     private var totalWritten = 0L
 
-    protected abstract fun reset(): Hash
+    fun reset(): Hash {
+        coreReset()
+        return this
+    }
 
     fun update(data: ByteArray, offset: Int, count: Int): Hash {
         var curr = offset
@@ -26,7 +29,7 @@ abstract class Hash(val chunkSize: Int, val digestSize: Int) {
             writtenInChunk += toRead
             if (writtenInChunk >= chunkSize) {
                 writtenInChunk -= chunkSize
-                core(chunk)
+                coreUpdate(chunk)
             }
         }
         totalWritten += count
@@ -34,23 +37,24 @@ abstract class Hash(val chunkSize: Int, val digestSize: Int) {
     }
 
     fun digestOut(out: ByteArray) {
-        val pad = generatePadding(totalWritten)
+        val pad = corePadding(totalWritten)
         var padPos = 0
         while (padPos < pad.size) {
             val padSize = chunkSize - writtenInChunk
             arraycopy(pad, padPos, chunk, writtenInChunk, padSize)
-            core(chunk)
+            coreUpdate(chunk)
             writtenInChunk = 0
             padPos += padSize
         }
 
-        digestCore(out)
-        reset()
+        coreDigest(out)
+        coreReset()
     }
 
-    protected abstract fun generatePadding(totalWritten: Long): ByteArray
-    protected abstract fun core(chunk: ByteArray)
-    protected abstract fun digestCore(out: ByteArray)
+    protected abstract fun coreReset()
+    protected abstract fun corePadding(totalWritten: Long): ByteArray
+    protected abstract fun coreUpdate(chunk: ByteArray)
+    protected abstract fun coreDigest(out: ByteArray)
 
     fun update(data: ByteArray) = update(data, 0, data.size)
     fun digest(): ByteArray = ByteArray(digestSize).also { digestOut(it) }

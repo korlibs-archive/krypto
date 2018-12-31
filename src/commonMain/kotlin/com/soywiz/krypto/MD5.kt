@@ -15,18 +15,17 @@ class MD5 : Hash(chunkSize = 64, digestSize = 16) {
     private val b = IntArray(16)
 
     init {
-        reset()
+        coreReset()
     }
 
-    override fun reset(): Hash {
+    override fun coreReset() {
         r[0] = 0x67452301
         r[1] = 0xEFCDAB89.toInt()
         r[2] = 0x98BADCFE.toInt()
         r[3] = 0x10325476
-        return this
     }
 
-    override fun core(chunk: ByteArray) {
+    override fun coreUpdate(chunk: ByteArray) {
         for (j in 0 until 64) b[j ushr 2] = (chunk[j].toInt() shl 24) or (b[j ushr 2] ushr 8)
         for (j in 0 until 4) o[j] = r[j]
         for (j in 0 until 64) {
@@ -54,7 +53,7 @@ class MD5 : Hash(chunkSize = 64, digestSize = 16) {
         for (j in 0 until 4) r[j] += o[j]
     }
 
-    override fun generatePadding(totalWritten: Long): ByteArray {
+    override fun corePadding(totalWritten: Long): ByteArray {
         val numberOfBlocks = ((totalWritten + 8) / chunkSize) + 1
         val totalWrittenBits = totalWritten * 8
         return ByteArray(((numberOfBlocks * chunkSize) - totalWritten).toInt()).apply {
@@ -63,7 +62,7 @@ class MD5 : Hash(chunkSize = 64, digestSize = 16) {
         }
     }
 
-    override fun digestCore(out: ByteArray) {
+    override fun coreDigest(out: ByteArray) {
         for (it in 0 until 16) out[it] = (r[it / 4] ushr ((it % 4) * 8)).toByte()
     }
 }
