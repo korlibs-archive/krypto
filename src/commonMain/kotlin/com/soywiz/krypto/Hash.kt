@@ -15,12 +15,12 @@ interface Hash {
     fun digestOut(out: ByteArray)
 }
 
-abstract class BaseHash(override val chunkSize: Int, override val digestSize: Int) : Hash {
-    private val chunk by lazy { ByteArray(chunkSize) }
+abstract class BaseHash(final override val chunkSize: Int, final override val digestSize: Int) : Hash {
+    private val chunk = ByteArray(chunkSize)
     private var writtenInChunk = 0
     private var totalWritten = 0L
 
-    override fun update(data: ByteArray, offset: Int, count: Int): Hash {
+    final override fun update(data: ByteArray, offset: Int, count: Int): Hash {
         var curr = offset
         var left = count
         while (left > 0) {
@@ -39,7 +39,7 @@ abstract class BaseHash(override val chunkSize: Int, override val digestSize: In
         return this
     }
 
-    override fun digestOut(out: ByteArray) {
+    final override fun digestOut(out: ByteArray) {
         val pad = generatePadding(totalWritten)
         var padPos = 0
         while (padPos < pad.size) {
