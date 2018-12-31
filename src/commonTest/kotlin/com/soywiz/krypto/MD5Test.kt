@@ -5,10 +5,24 @@ import kotlin.test.assertEquals
 
 class MD5Test {
     @Test
-    fun test() {
+    fun testEmpty() {
         assertEquals("d41d8cd98f00b204e9800998ecf8427e", MD5.digest("".toByteArray()).hex)
+    }
+
+    @Test
+    fun test1() {
         assertEquals("0cc175b9c0f1b6a831c399e269772661", MD5.digest("a".toByteArray()).hex)
+    }
+
+    @Test
+    fun test2() {
+        assertEquals("014842d480b571495a4a0363793f7367", MD5.digest(ByteArray(64) { 'a'.toByte() }).hex)
+    }
+
+    @Test
+    fun test3() {
         assertEquals("900150983cd24fb0d6963f7d28e17f72", MD5.digest("abc".toByteArray()).hex)
+        assertEquals("900150983cd24fb0d6963f7d28e17f72", MD5().update("a".toByteArray()).update("bc".toByteArray()).digest().hex)
         assertEquals("f96b697d7cb7938d525a2f31aaf161d0", MD5.digest("message digest".toByteArray()).hex)
         assertEquals("c3fcd3d76192e4007dfb496cca67e13b", MD5.digest("abcdefghijklmnopqrstuvwxyz".toByteArray()).hex)
         assertEquals("d174ab98d277d9f5a5611c2c9f419d9f", MD5.digest("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".toByteArray()).hex)
