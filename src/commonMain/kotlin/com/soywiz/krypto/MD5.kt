@@ -56,6 +56,15 @@ class MD5 : BaseHash(chunkSize = 64, digestSize = 16) {
         for (j in 0 until 4) r[j] += o[j]
     }
 
+    override fun generatePadding(totalWritten: Long): ByteArray {
+        val numberOfBlocks = ((totalWritten + 8) / chunkSize) + 1
+        val totalWrittenBits = totalWritten * 8
+        return ByteArray(((numberOfBlocks * chunkSize) - totalWritten).toInt()).apply {
+            this[0] = 0x80.toByte()
+            for (i in 0 until 8) this[this.size - 8 + i] = (totalWrittenBits ushr (8 * i)).toByte()
+        }
+    }
+
     override fun digestCore(out: ByteArray) {
         for (it in 0 until 16) out[it] = (r[it / 4] ushr ((it % 4) * 8)).toByte()
     }

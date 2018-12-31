@@ -12,7 +12,7 @@ interface Hash {
     val digestSize: Int
     fun reset(): Hash
     fun update(data: ByteArray, offset: Int, count: Int): Hash
-    fun digest(out: ByteArray)
+    fun digestOut(out: ByteArray)
 }
 
 abstract class BaseHash(override val chunkSize: Int, override val digestSize: Int) : Hash {
@@ -39,7 +39,7 @@ abstract class BaseHash(override val chunkSize: Int, override val digestSize: In
         return this
     }
 
-    override fun digest(out: ByteArray) {
+    override fun digestOut(out: ByteArray) {
         val pad = generatePadding(totalWritten)
         var padPos = 0
         while (padPos < pad.size) {
@@ -54,20 +54,12 @@ abstract class BaseHash(override val chunkSize: Int, override val digestSize: In
         reset()
     }
 
-    private fun generatePadding(totalWritten: Long): ByteArray {
-        val numberOfBlocks = ((totalWritten + 8) / chunkSize) + 1
-        val totalWrittenBits = totalWritten * 8
-        return ByteArray(((numberOfBlocks * chunkSize) - totalWritten).toInt()).apply {
-            this[0] = 0x80.toByte()
-            for (i in 0 until 8) this[this.size - 8 + i] = (totalWrittenBits ushr (8 * i)).toByte()
-        }
-    }
-
+    protected abstract fun generatePadding(totalWritten: Long): ByteArray
     protected abstract fun core(chunk: ByteArray)
     protected abstract fun digestCore(out: ByteArray)
 }
 
 fun Hash.update(data: ByteArray) = update(data, 0, data.size)
-fun Hash.digest(): ByteArray = ByteArray(digestSize).also { digest(it) }
+fun Hash.digest(): ByteArray = ByteArray(digestSize).also { digestOut(it) }
 
 fun <T : Hash> HashProvider<T>.digest(data: ByteArray) = create().also { it.update(data, 0, data.size) }.digest()
