@@ -1,5 +1,6 @@
 package com.soywiz.krypto
 
+import com.soywiz.krypto.internal.*
 import kotlin.math.*
 
 object SHA1 {
@@ -81,8 +82,6 @@ object SHA1 {
 			write32_be(16, h4)
 		}
 	}
-
-	private fun Int.rotateLeft(bits: Int): Int = ((this shl bits) or (this ushr (32 - bits)))
 
 	private fun Int.extract8(offset: Int): Int = (this ushr offset) and 0xFF
 	private fun ByteArray.write32_be(o: Int, v: Int) = run {
