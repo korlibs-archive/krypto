@@ -10,20 +10,15 @@ import com.soywiz.krypto.internal.ext8
  * code.google.com/p/crypto-js/wiki/License
  */
 class AES(val keyWords: IntArray) {
-	val keySize = keyWords.size
-	val numRounds = keySize + 6
-	val ksRows = (numRounds + 1) * 4
-	private var keySchedule = IntArray(ksRows)
-	private var invKeySchedule = IntArray(ksRows)
-
-	constructor(key: ByteArray) : this(key.toIntArray())
-
-	init {
-		for (ksRow in 0 until ksRows) {
-			if (ksRow < keySize) {
-				keySchedule[ksRow] = keyWords[ksRow]
+	private val keySize = keyWords.size
+	private val numRounds = keySize + 6
+	private val ksRows = (numRounds + 1) * 4
+	private val keySchedule = IntArray(ksRows).apply {
+		for (ksRow in 0 until size) {
+			this[ksRow] = if (ksRow < keySize) {
+				keyWords[ksRow]
 			} else {
-				var t = keySchedule[ksRow - 1]
+				var t = this[ksRow - 1]
 				if (0 == (ksRow % keySize)) {
 					t = (t shl 8) or (t ushr 24)
 					t = (SBOX[t.ext8(24)] shl 24) or (SBOX[t.ext8(16)] shl 16) or (SBOX[t.ext8(8)] shl 8) or SBOX[t and 0xff]
@@ -31,16 +26,19 @@ class AES(val keyWords: IntArray) {
 				} else if (keySize > 6 && ksRow % keySize == 4) {
 					t = (SBOX[t.ext8(24)] shl 24) or (SBOX[t.ext8(16)] shl 16) or (SBOX[t.ext8(8)] shl 8) or SBOX[t and 0xff]
 				}
-				keySchedule[ksRow] = keySchedule[ksRow - keySize] xor t
+				this[ksRow - keySize] xor t
 			}
 		}
-
-		for (invKsRow in 0 until ksRows) {
+	}
+	private val invKeySchedule = IntArray(ksRows).apply {
+		for (invKsRow in 0 until size) {
 			val ksRow = ksRows - invKsRow
 			val t = if ((invKsRow % 4) != 0) keySchedule[ksRow] else keySchedule[ksRow - 4]
-			invKeySchedule[invKsRow] = if (invKsRow < 4 || ksRow <= 4) t else INV_SUB_MIX_0[SBOX[t.ext8(24)]] xor INV_SUB_MIX_1[SBOX[t.ext8(16)]] xor INV_SUB_MIX_2[SBOX[t.ext8(8)]] xor INV_SUB_MIX_3[SBOX[t and 0xff]]
+			this[invKsRow] = if (invKsRow < 4 || ksRow <= 4) t else INV_SUB_MIX_0[SBOX[t.ext8(24)]] xor INV_SUB_MIX_1[SBOX[t.ext8(16)]] xor INV_SUB_MIX_2[SBOX[t.ext8(8)]] xor INV_SUB_MIX_3[SBOX[t and 0xff]]
 		}
 	}
+
+	constructor(key: ByteArray) : this(key.toIntArray())
 
 	fun encryptBlock(M: IntArray, offset: Int) {
 		this.doCryptBlock(M, offset, this.keySchedule, SUB_MIX_0, SUB_MIX_1, SUB_MIX_2, SUB_MIX_3, SBOX)
@@ -111,10 +109,8 @@ class AES(val keyWords: IntArray) {
 		private val RCON = intArrayOf(0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36)
 
 		init {
-			val d = IntArray(256)
-			for (i in 0 until 256) {
-				d[i] = (i shl 1)
-				if (i >= 128) d[i] = d[i] xor 0x11b
+			val d = IntArray(256) {
+				if (it >= 128) (it shl 1) xor 0x11b else (it shl 1)
 			}
 
 			var x = 0
