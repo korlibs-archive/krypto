@@ -7,6 +7,7 @@ class SecureRandomTest {
     @Test
     fun test() {
         assertNotEquals(SecureRandom().nextBytes(16).toList(), SecureRandom().nextBytes(16).toList())
-        println(SecureRandom().nextBytes(15).toList())
+        assertNotEquals(SecureRandom.nextBytes(16).toList(), SecureRandom.nextBytes(16).toList())
+        println(SecureRandom.nextBytes(15).toList())
     }
 }
