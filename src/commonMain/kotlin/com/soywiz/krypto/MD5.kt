@@ -66,3 +66,5 @@ class MD5 : Hash(chunkSize = 64, digestSize = 16) {
         for (it in 0 until 16) out[it] = (r[it / 4] ushr ((it % 4) * 8)).toByte()
     }
 }
+
+fun ByteArray.md5() = hash(MD5)

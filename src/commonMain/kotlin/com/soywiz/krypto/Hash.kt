@@ -59,3 +59,5 @@ abstract class Hash(val chunkSize: Int, val digestSize: Int) {
     fun update(data: ByteArray) = update(data, 0, data.size)
     fun digest(): ByteArray = ByteArray(digestSize).also { digestOut(it) }
 }
+
+fun ByteArray.hash(algo: HashFactory): ByteArray = algo.digest(this)

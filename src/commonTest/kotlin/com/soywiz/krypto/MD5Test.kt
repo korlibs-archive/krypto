@@ -12,6 +12,9 @@ class MD5Test {
     @Test
     fun test1() {
         assertEquals("0cc175b9c0f1b6a831c399e269772661", MD5.digest("a".toByteArray()).hex)
+
+        assertEquals("0cc175b9c0f1b6a831c399e269772661", "a".toByteArray().hash(MD5).hex)
+        assertEquals("0cc175b9c0f1b6a831c399e269772661", "a".toByteArray().md5().hex)
     }
 
     @Test

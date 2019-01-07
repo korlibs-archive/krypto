@@ -65,3 +65,5 @@ class SHA1 : SHA(chunkSize = 64, digestSize = 20) {
         for (n in out.indices) out[n] = (h[n / 4] ushr (24 - 8 * (n % 4))).toByte()
     }
 }
+
+fun ByteArray.sha1() = hash(SHA1)

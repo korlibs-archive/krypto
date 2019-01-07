@@ -12,6 +12,9 @@ class SHA256Test {
     @Test
     fun test2() {
         assertEquals("ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb", SHA256.digest(ByteArray(64) { 'a'.toByte() }).hex)
+
+        assertEquals("ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb", ByteArray(64) { 'a'.toByte() }.hash(SHA256).hex)
+        assertEquals("ffe054fe7ae0cb6dc65c3af9b61d5209f439851db43d0ba5997337df154668eb", ByteArray(64) { 'a'.toByte() }.sha256().hex)
     }
 
     @Test
