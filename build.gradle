@@ -1,5 +1,5 @@
 plugins {
-    id 'kotlin-multiplatform' version '1.3.11'
+    id 'kotlin-multiplatform' version '1.3.20-eap-100'
     id 'com.moowork.node' version '1.2.0'
 }
 
@@ -7,6 +7,7 @@ repositories {
     mavenLocal()
     jcenter()
     maven { url "https://dl.bintray.com/soywiz/soywiz" }
+    maven { url "https://dl.bintray.com/kotlin/kotlin-eap" }
 }
 
 kotlin {
