@@ -1,9 +1,5 @@
 #!/bin/bash
-
-# ENSURE ~/.gradle-linux/gradle.properties and ~/.gradle-win/gradle.properties
-# are hard-linking to ~/.gradle/gradle.properties
-# symlinks won't work.
-
+set -e
 ./gradlew publish
 ./gradlew_linux publishLinuxX64PublicationToMavenRepository
 ./gradlew_win publishMingwX64PublicationToMavenRepository
