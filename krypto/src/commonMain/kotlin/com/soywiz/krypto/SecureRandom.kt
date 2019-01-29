@@ -4,6 +4,7 @@ import com.soywiz.krypto.internal.arraycopy
 import kotlin.random.Random
 
 expect fun fillRandomBytes(array: ByteArray)
+var randomUnittesting = false
 
 open class SecureRandom : Random() {
     companion object : SecureRandom()
