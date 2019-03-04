@@ -181,22 +181,17 @@ class AES(val keyWords: IntArray) {
 			var s3 = 0
 
 			for (n in 0 until wordsLength step 4) {
-				val t0 = words[n + 0]
-				val t1 = words[n + 1]
-				val t2 = words[n + 2]
-				val t3 = words[n + 3]
-
-				aes.encryptBlock(words, n)
-
 				words[n + 0] = words[n + 0] xor s0
 				words[n + 1] = words[n + 1] xor s1
 				words[n + 2] = words[n + 2] xor s2
 				words[n + 3] = words[n + 3] xor s3
 
-				s0 = t0
-				s1 = t1
-				s2 = t2
-				s3 = t3
+                aes.encryptBlock(words, n)
+
+                s0 = words[n + 0]
+                s1 = words[n + 1]
+                s2 = words[n + 2]
+                s3 = words[n + 3]
 			}
 			return words.toByteArray()
 		}
