@@ -11,6 +11,14 @@ class AESTest {
 		assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
 		assertEquals(cipherText.toHexStringLower(), AES.encryptEes128Cbc(plainText, cipherKey).toHexStringLower())
 	}
+
+	@Test
+	fun longName() {
+		val plainText = Hex.decode("00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff")
+		val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
+		val cipherText = AES.encryptEes128Cbc(plainText, cipherKey)
+		assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
+	}
 }
 
 /*
