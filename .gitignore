@@ -1,6 +1,6 @@
 /.idea
 /.gradle
-/build
+build/
 /out
 /classes
 /web
