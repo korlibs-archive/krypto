@@ -29,9 +29,24 @@ import java.security.Security
  */
 object PRNGFixes {
 
-    private val VERSION_CODE_JELLY_BEAN = 16
-    private val VERSION_CODE_JELLY_BEAN_MR2 = 18
-    private val BUILD_FINGERPRINT_AND_DEVICE_SERIAL = buildFingerprintAndDeviceSerial
+    private const val VERSION_CODE_JELLY_BEAN = 16
+    private const val VERSION_CODE_JELLY_BEAN_MR2 = 18
+    private val BUILD_FINGERPRINT_AND_DEVICE_SERIAL: ByteArray = run {
+		val result = StringBuilder()
+		val fingerprint = Build.FINGERPRINT
+		if (fingerprint != null) {
+			result.append(fingerprint)
+		}
+		val serial = deviceSerialNumber
+		if (serial != null) {
+			result.append(serial)
+		}
+		try {
+			result.toString().toByteArray(charset("UTF-8"))
+		} catch (e: UnsupportedEncodingException) {
+			throw RuntimeException("UTF-8 encoding not supported")
+		}
+	}
 
     /**
      * Gets the hardware serial number of this device.
@@ -41,33 +56,11 @@ object PRNGFixes {
     private// We're using the Reflection API because Build.SERIAL is only available
     // since API Level 9 (Gingerbread, Android 2.3).
     val deviceSerialNumber: String?
-        get() {
-            try {
-                return Build::class.java!!.getField("SERIAL").get(null) as String
-            } catch (ignored: Exception) {
-                return null
-            }
-
-        }
-
-    private val buildFingerprintAndDeviceSerial: ByteArray
-        get() {
-            val result = StringBuilder()
-            val fingerprint = Build.FINGERPRINT
-            if (fingerprint != null) {
-                result.append(fingerprint)
-            }
-            val serial = deviceSerialNumber
-            if (serial != null) {
-                result.append(serial)
-            }
-            try {
-                return result.toString().toByteArray(charset("UTF-8"))
-            } catch (e: UnsupportedEncodingException) {
-                throw RuntimeException("UTF-8 encoding not supported")
-            }
-
-        }
+        get() = try {
+			Build::class.java.getField("SERIAL").get(null) as String
+		} catch (ignored: Exception) {
+			null
+		}
 
     /**
      * Applies all fixes.
@@ -133,8 +126,8 @@ object PRNGFixes {
         // default, if not yet installed.
         val secureRandomProviders = Security.getProviders("SecureRandom.SHA1PRNG")
         if (secureRandomProviders == null
-            || secureRandomProviders!!.size < 1
-            || LinuxPRNGSecureRandomProvider::class.java != secureRandomProviders!![0].javaClass
+            || secureRandomProviders.isEmpty()
+            || LinuxPRNGSecureRandomProvider::class.java != secureRandomProviders[0].javaClass
         ) {
             Security.insertProviderAt(LinuxPRNGSecureRandomProvider(), 1)
         }
@@ -175,7 +168,7 @@ object PRNGFixes {
             // explicitly request a SHA1PRNG SecureRandom and we thus need to
             // prevent them from getting the default implementation whose output
             // may have low entropy.
-            put("SecureRandom.SHA1PRNG", LinuxPRNGSecureRandom::class.java!!.name)
+            put("SecureRandom.SHA1PRNG", LinuxPRNGSecureRandom::class.java.name)
             put("SecureRandom.SHA1PRNG ImplementedIn", "Software")
         }
     }
@@ -236,7 +229,7 @@ object PRNGFixes {
                 // On a small fraction of devices /dev/urandom is not writable.
                 // Log and ignore.
                 Log.w(
-                    PRNGFixes::class.java!!.simpleName,
+                    PRNGFixes::class.java.simpleName,
                     "Failed to mix seed into $URANDOM_FILE"
                 )
             } finally {
