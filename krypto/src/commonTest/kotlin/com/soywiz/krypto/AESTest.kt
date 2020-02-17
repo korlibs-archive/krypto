@@ -9,14 +9,14 @@ class AESTest {
 		val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
 		val cipherText = Hex.decode("69c4e0d86a7b0430d8cdb78070b4c55a")
 		assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
-		assertEquals(cipherText.toHexStringLower(), AES.encryptEes128Cbc(plainText, cipherKey).toHexStringLower())
+		assertEquals(cipherText.toHexStringLower(), AES.encryptAes128Cbc(plainText, cipherKey).toHexStringLower())
 	}
 
 	@Test
 	fun longName() {
 		val plainText = Hex.decode("00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff")
 		val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
-		val cipherText = AES.encryptEes128Cbc(plainText, cipherKey)
+		val cipherText = AES.encryptAes128Cbc(plainText, cipherKey)
 		assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
 	}
 }
