@@ -1,3 +1,3 @@
 package com.soywiz.krypto.internal
 
-internal const val KRYPTO_VERSION = "1.10.0"
+internal const val KRYPTO_VERSION = "1.10.1-SNAPSHOT"
