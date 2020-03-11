@@ -19,6 +19,20 @@ class AESTest {
 		val cipherText = AES.encryptAes128Cbc(plainText, cipherKey)
 		assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
 	}
+
+    @Test
+    fun pkcs7padding() {
+        val data = ByteArray(128){it.toByte()}
+        for (i in data.indices) {
+            // plainText is [0 .. i]
+            val plainText = ByteArray(i){it.toByte()}
+            println(plainText.contentToString())
+            val cipherKey = byteArrayOf(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4)
+            val encryptedText = AES.encryptAes128Cbc(plainText, cipherKey, Padding.PKCS7Padding)
+            val decryptedText = AES.decryptAes128Cbc(encryptedText, cipherKey, Padding.PKCS7Padding)
+            assertEquals(plainText.toHexStringLower(), decryptedText.toHexStringLower())
+        }
+    }
 }
 
 /*
