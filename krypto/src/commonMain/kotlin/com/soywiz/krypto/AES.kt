@@ -1,5 +1,6 @@
 package com.soywiz.krypto
 
+import com.soywiz.krypto.internal.arraycopy
 import com.soywiz.krypto.internal.ext8
 
 @Suppress("UNUSED_CHANGED_VALUE")
@@ -170,12 +171,41 @@ class AES(val keyWords: IntArray) {
 			return out
 		}
 
+        private fun addPadding(data: ByteArray, blockSize: Int, padding: Padding): ByteArray {
+            return when (padding) {
+                Padding.NoPadding -> {
+                    data
+                }
+                Padding.PKCS7Padding -> {
+                    val paddingSize = blockSize - data.size % blockSize
+                    ByteArray(data.size + paddingSize) {
+                        if (it < data.size) data[it] else paddingSize.toByte()
+                    }
+                }
+            }
+        }
+
+        private fun removePadding(data: ByteArray, padding: Padding): ByteArray {
+            return when (padding) {
+                Padding.NoPadding -> {
+                    data
+                }
+                Padding.PKCS7Padding -> {
+                    val paddingSize = data[data.size - 1].toInt() and 0xff
+                    val result = ByteArray(data.size - paddingSize)
+                    arraycopy(data, 0, result, 0, result.size)
+                    result
+                }
+            }
+        }
+
         @Deprecated("This was a typo", ReplaceWith("encryptAes128Cbc(data, key)", "com.soywiz.krypto.AES.Companion.encryptAes128Cbc"))
         fun encryptEes128Cbc(data: ByteArray, key: ByteArray): ByteArray = encryptAes128Cbc(data, key)
 
-		fun encryptAes128Cbc(data: ByteArray, key: ByteArray): ByteArray {
+		fun encryptAes128Cbc(data: ByteArray, key: ByteArray, padding: Padding = Padding.NoPadding): ByteArray {
+            val pData = addPadding(data, 16, padding)
 			val aes = AES(key)
-			val words = data.toIntArray()
+			val words = pData.toIntArray()
 			val wordsLength = words.size
 
 			var s0 = 0
@@ -199,7 +229,7 @@ class AES(val keyWords: IntArray) {
 			return words.toByteArray()
 		}
 
-		fun decryptAes128Cbc(data: ByteArray, key: ByteArray): ByteArray {
+		fun decryptAes128Cbc(data: ByteArray, key: ByteArray, padding: Padding = Padding.NoPadding): ByteArray {
 			val aes = AES(key)
 			val dataWords = data.toIntArray()
 			val wordsLength = dataWords.size
@@ -227,7 +257,7 @@ class AES(val keyWords: IntArray) {
 				s2 = t2
 				s3 = t3
 			}
-			return dataWords.toByteArray()
+            return removePadding(dataWords.toByteArray(), padding)
 		}
 	}
 }
