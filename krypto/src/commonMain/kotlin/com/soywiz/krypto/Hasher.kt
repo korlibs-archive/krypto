@@ -1,23 +1,25 @@
 package com.soywiz.krypto
 
+import com.soywiz.krypto.encoding.Base64
+import com.soywiz.krypto.encoding.Hex
 import com.soywiz.krypto.internal.arraycopy
 import kotlin.math.min
 
-open class HashFactory(val create: () -> Hash) {
+open class HasherFactory(val create: () -> Hasher) {
     fun digest(data: ByteArray) = create().also { it.update(data, 0, data.size) }.digest()
 }
 
-abstract class Hash(val chunkSize: Int, val digestSize: Int) {
+abstract class Hasher(val chunkSize: Int, val digestSize: Int) {
     private val chunk = ByteArray(chunkSize)
     private var writtenInChunk = 0
     private var totalWritten = 0L
 
-    fun reset(): Hash {
+    fun reset(): Hasher {
         coreReset()
         return this
     }
 
-    fun update(data: ByteArray, offset: Int, count: Int): Hash {
+    fun update(data: ByteArray, offset: Int, count: Int): Hasher {
         var curr = offset
         var left = count
         while (left > 0) {
@@ -57,7 +59,18 @@ abstract class Hash(val chunkSize: Int, val digestSize: Int) {
     protected abstract fun coreDigest(out: ByteArray)
 
     fun update(data: ByteArray) = update(data, 0, data.size)
-    fun digest(): ByteArray = ByteArray(digestSize).also { digestOut(it) }
+    fun digest(): Hash = Hash(ByteArray(digestSize).also { digestOut(it) })
 }
 
-fun ByteArray.hash(algo: HashFactory): ByteArray = algo.digest(this)
+inline class Hash(val bytes: ByteArray) {
+    companion object {
+        fun fromHex(hex: String): Hash = Hash(Hex.decode(hex))
+        fun fromBase64(base64: String): Hash = Hash(Base64.decodeIgnoringSpaces(base64))
+    }
+    val base64 get() = Base64.encode(bytes)
+    val hex get() = Hex.encode(bytes)
+    val hexLower get() = Hex.encodeLower(bytes)
+    val hexUpper get() = Hex.encodeUpper(bytes)
+}
+
+fun ByteArray.hash(algo: HasherFactory): Hash = algo.digest(this)

@@ -1,6 +1,6 @@
 package com.soywiz.krypto
 
-abstract class SHA(chunkSize: Int, digestSize: Int) : Hash(chunkSize, digestSize) {
+abstract class SHA(chunkSize: Int, digestSize: Int) : Hasher(chunkSize, digestSize) {
     override fun corePadding(totalWritten: Long): ByteArray {
         val tail = totalWritten % 64
         val padding = (if (64 - tail >= 9) 64 - tail else 128 - tail)

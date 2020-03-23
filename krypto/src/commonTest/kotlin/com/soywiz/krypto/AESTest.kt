@@ -1,5 +1,6 @@
 package com.soywiz.krypto
 
+import com.soywiz.krypto.encoding.Hex
 import kotlin.test.*
 
 class AESTest {

@@ -1,5 +1,6 @@
 package com.soywiz.krypto
 
+import com.soywiz.krypto.encoding.ASCII
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -19,7 +20,7 @@ class SHA256Test {
 
     @Test
     fun test3() {
-        assertEquals("d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592", SHA256.digest("The quick brown fox jumps over the lazy dog".toByteArray()).hex)
-        assertEquals("539deb4a951195ca3377514b8a44b95061b4fcd5ae21b29be3748cc835992b52", SHA256.digest("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab".toByteArray()).hex)
+        assertEquals("d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592", SHA256.digest(ASCII("The quick brown fox jumps over the lazy dog")).hex)
+        assertEquals("539deb4a951195ca3377514b8a44b95061b4fcd5ae21b29be3748cc835992b52", SHA256.digest(ASCII("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab")).hex)
     }
 }
