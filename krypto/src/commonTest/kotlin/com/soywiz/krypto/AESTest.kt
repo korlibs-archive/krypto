@@ -1,6 +1,7 @@
 package com.soywiz.krypto
 
 import com.soywiz.krypto.encoding.Hex
+import kotlin.random.Random
 import kotlin.test.*
 
 class AESTest {
@@ -29,8 +30,27 @@ class AESTest {
             val plainText = ByteArray(i){it.toByte()}
             println(plainText.contentToString())
             val cipherKey = byteArrayOf(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4)
-            val encryptedText = AES.encryptAes128Cbc(plainText, cipherKey, Padding.PKCS7Padding)
-            val decryptedText = AES.decryptAes128Cbc(encryptedText, cipherKey, Padding.PKCS7Padding)
+            val encryptedText = AES.encryptAes128Cbc(plainText, cipherKey, null, Padding.PKCS7Padding)
+            val decryptedText = AES.decryptAes128Cbc(encryptedText, cipherKey, null, Padding.PKCS7Padding)
+            assertEquals(plainText.toHexStringLower(), decryptedText.toHexStringLower())
+        }
+    }
+
+    @Test
+    fun aecCbcWithIvAndPkcs7Padding() {
+        val keySizeArray = intArrayOf(16, 24, 32)
+        for (i in 0 .. 100) {
+            val keySize = keySizeArray[i % keySizeArray.size];
+            val cipherKey = Random.nextBytes(keySize)
+            val iv = Random.nextBytes(16)
+            val dataSize = Random.nextInt(32)
+            val plainText = Random.nextBytes(dataSize)
+            val encryptedText = AES.encryptAes128Cbc(plainText, cipherKey, iv, Padding.PKCS7Padding)
+            val decryptedText = AES.decryptAes128Cbc(encryptedText, cipherKey, iv, Padding.PKCS7Padding)
+            println("PlainText=   ${plainText.contentToString()}")
+            println("EncryptText= ${encryptedText.contentToString()}")
+            println("DecryptText= ${decryptedText.contentToString()}")
+            println()
             assertEquals(plainText.toHexStringLower(), decryptedText.toHexStringLower())
         }
     }

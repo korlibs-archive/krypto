@@ -199,19 +199,29 @@ class AES(val keyWords: IntArray) {
             }
         }
 
+        private fun getIV(srcIV: ByteArray?): ByteArray {
+            val dstIV = ByteArray(16)
+            srcIV?.apply {
+                val min = if (size < dstIV.size) size else dstIV.size
+                arraycopy(srcIV, 0, dstIV, 0, min)
+            }
+            return dstIV
+        }
+
         @Deprecated("This was a typo", ReplaceWith("encryptAes128Cbc(data, key)", "com.soywiz.krypto.AES.Companion.encryptAes128Cbc"))
         fun encryptEes128Cbc(data: ByteArray, key: ByteArray): ByteArray = encryptAes128Cbc(data, key)
 
-		fun encryptAes128Cbc(data: ByteArray, key: ByteArray, padding: Padding = Padding.NoPadding): ByteArray {
+		fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray? = null, padding: Padding = Padding.NoPadding): ByteArray {
             val pData = addPadding(data, 16, padding)
 			val aes = AES(key)
 			val words = pData.toIntArray()
 			val wordsLength = words.size
+            val ivWords = getIV(iv).toIntArray()
 
-			var s0 = 0
-			var s1 = 0
-			var s2 = 0
-			var s3 = 0
+			var s0 = ivWords[0]
+			var s1 = ivWords[1]
+			var s2 = ivWords[2]
+			var s3 = ivWords[3]
 
 			for (n in 0 until wordsLength step 4) {
 				words[n + 0] = words[n + 0] xor s0
@@ -229,15 +239,16 @@ class AES(val keyWords: IntArray) {
 			return words.toByteArray()
 		}
 
-		fun decryptAes128Cbc(data: ByteArray, key: ByteArray, padding: Padding = Padding.NoPadding): ByteArray {
+		fun decryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray? = null, padding: Padding = Padding.NoPadding): ByteArray {
 			val aes = AES(key)
 			val dataWords = data.toIntArray()
 			val wordsLength = dataWords.size
+            val ivWords = getIV(iv).toIntArray()
 
-			var s0 = 0
-			var s1 = 0
-			var s2 = 0
-			var s3 = 0
+            var s0 = ivWords[0]
+            var s1 = ivWords[1]
+            var s2 = ivWords[2]
+            var s3 = ivWords[3]
 
 			for (n in 0 until wordsLength step 4) {
 				val t0 = dataWords[n + 0]
