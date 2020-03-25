@@ -23,15 +23,18 @@ class AESTest {
 	}
 
     @Test
-    fun aesEcbWithPkcs7Padding() {
+    fun aesEcb() {
         val keySizeArray = intArrayOf(16, 24, 32)
+        val paddingValues = Padding.values()
         for (i in 0 .. 100) {
-            val keySize = keySizeArray[i % keySizeArray.size];
+            val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
-            val dataSize = Random.nextInt(32)
+            val padding = paddingValues[i % paddingValues.size]
+            println("KeySize=$keySize, Padding=$padding")
+            val dataSize = if (padding == Padding.NoPadding) 16 else Random.nextInt(32)
             val plainText = Random.nextBytes(dataSize)
-            val encryptedText = AES.encryptAesEcb(plainText, cipherKey, Padding.PKCS7Padding)
-            val decryptedText = AES.decryptAesEcb(encryptedText, cipherKey, Padding.PKCS7Padding)
+            val encryptedText = AES.encryptAesEcb(plainText, cipherKey, padding)
+            val decryptedText = AES.decryptAesEcb(encryptedText, cipherKey, padding)
             println("PlainText=   ${plainText.contentToString()}")
             println("EncryptText= ${encryptedText.contentToString()}")
             println("DecryptText= ${decryptedText.contentToString()}")
@@ -41,16 +44,19 @@ class AESTest {
     }
 
     @Test
-    fun aecCbcWithIvAndPkcs7Padding() {
+    fun aecCbc() {
         val keySizeArray = intArrayOf(16, 24, 32)
+        val paddingValues = Padding.values()
         for (i in 0 .. 100) {
-            val keySize = keySizeArray[i % keySizeArray.size];
+            val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
             val iv = Random.nextBytes(16)
-            val dataSize = Random.nextInt(32)
+            val padding = paddingValues[i % paddingValues.size]
+            println("KeySize=$keySize, Padding=$padding")
+            val dataSize = if (padding == Padding.NoPadding) 16 else Random.nextInt(32)
             val plainText = Random.nextBytes(dataSize)
-            val encryptedText = AES.encryptAesCbc(plainText, cipherKey, iv, Padding.PKCS7Padding)
-            val decryptedText = AES.decryptAesCbc(encryptedText, cipherKey, iv, Padding.PKCS7Padding)
+            val encryptedText = AES.encryptAesCbc(plainText, cipherKey, iv, padding)
+            val decryptedText = AES.decryptAesCbc(encryptedText, cipherKey, iv, padding)
             println("PlainText=   ${plainText.contentToString()}")
             println("EncryptText= ${encryptedText.contentToString()}")
             println("DecryptText= ${decryptedText.contentToString()}")
