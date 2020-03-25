@@ -23,15 +23,19 @@ class AESTest {
 	}
 
     @Test
-    fun pkcs7padding() {
-        val data = ByteArray(128){it.toByte()}
-        for (i in data.indices) {
-            // plainText is [0 .. i]
-            val plainText = ByteArray(i){it.toByte()}
-            println(plainText.contentToString())
-            val cipherKey = byteArrayOf(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4)
-            val encryptedText = AES.encryptAes128Cbc(plainText, cipherKey, null, Padding.PKCS7Padding)
-            val decryptedText = AES.decryptAes128Cbc(encryptedText, cipherKey, null, Padding.PKCS7Padding)
+    fun aesEcbWithPkcs7Padding() {
+        val keySizeArray = intArrayOf(16, 24, 32)
+        for (i in 0 .. 100) {
+            val keySize = keySizeArray[i % keySizeArray.size];
+            val cipherKey = Random.nextBytes(keySize)
+            val dataSize = Random.nextInt(32)
+            val plainText = Random.nextBytes(dataSize)
+            val encryptedText = AES.encryptAesEcb(plainText, cipherKey, Padding.PKCS7Padding)
+            val decryptedText = AES.decryptAesEcb(encryptedText, cipherKey, Padding.PKCS7Padding)
+            println("PlainText=   ${plainText.contentToString()}")
+            println("EncryptText= ${encryptedText.contentToString()}")
+            println("DecryptText= ${decryptedText.contentToString()}")
+            println()
             assertEquals(plainText.toHexStringLower(), decryptedText.toHexStringLower())
         }
     }
@@ -45,8 +49,8 @@ class AESTest {
             val iv = Random.nextBytes(16)
             val dataSize = Random.nextInt(32)
             val plainText = Random.nextBytes(dataSize)
-            val encryptedText = AES.encryptAes128Cbc(plainText, cipherKey, iv, Padding.PKCS7Padding)
-            val decryptedText = AES.decryptAes128Cbc(encryptedText, cipherKey, iv, Padding.PKCS7Padding)
+            val encryptedText = AES.encryptAesCbc(plainText, cipherKey, iv, Padding.PKCS7Padding)
+            val decryptedText = AES.decryptAesCbc(encryptedText, cipherKey, iv, Padding.PKCS7Padding)
             println("PlainText=   ${plainText.contentToString()}")
             println("EncryptText= ${encryptedText.contentToString()}")
             println("DecryptText= ${decryptedText.contentToString()}")
