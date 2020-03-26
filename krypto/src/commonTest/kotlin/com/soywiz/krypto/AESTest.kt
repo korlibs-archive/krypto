@@ -5,32 +5,34 @@ import kotlin.random.Random
 import kotlin.test.*
 
 class AESTest {
-	@Test
-	fun name() {
-		val plainText = Hex.decode("00112233445566778899aabbccddeeff")
-		val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
-		val cipherText = Hex.decode("69c4e0d86a7b0430d8cdb78070b4c55a")
-		assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
-		assertEquals(cipherText.toHexStringLower(), AES.encryptAes128Cbc(plainText, cipherKey).toHexStringLower())
-	}
+    @Test
+    fun name() {
+        val plainText = Hex.decode("00112233445566778899aabbccddeeff")
+        val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
+        val cipherText = Hex.decode("69c4e0d86a7b0430d8cdb78070b4c55a")
+        assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
+        assertEquals(cipherText.toHexStringLower(), AES.encryptAes128Cbc(plainText, cipherKey).toHexStringLower())
+    }
 
-	@Test
-	fun longName() {
-		val plainText = Hex.decode("00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff")
-		val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
-		val cipherText = AES.encryptAes128Cbc(plainText, cipherKey)
-		assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
-	}
+    @Test
+    fun longName() {
+        val plainText =
+            Hex.decode("00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff")
+        val cipherKey = Hex.decode("000102030405060708090a0b0c0d0e0f")
+        val cipherText = AES.encryptAes128Cbc(plainText, cipherKey)
+        assertEquals(plainText.toHexStringLower(), AES.decryptAes128Cbc(cipherText, cipherKey).toHexStringLower())
+    }
 
     @Test
     fun aesEcb() {
         val keySizeArray = intArrayOf(16, 24, 32)
         val paddingValues = Padding.values()
-        for (i in 0 .. 100) {
+        for (i in 0..100) {
             val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
             val padding = paddingValues[i % paddingValues.size]
             println("KeySize=$keySize, Padding=$padding")
+            println("Key= " + cipherKey.contentToString())
             val dataSize = if (padding == Padding.NoPadding) 16 else Random.nextInt(32)
             val plainText = Random.nextBytes(dataSize)
             val encryptedText = AES.encryptAesEcb(plainText, cipherKey, padding)
@@ -47,20 +49,17 @@ class AESTest {
     fun aecCbc() {
         val keySizeArray = intArrayOf(16, 24, 32)
         val paddingValues = Padding.values()
-        for (i in 0 .. 100) {
+        for (i in 0..100) {
             val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
             val iv = Random.nextBytes(16)
             val padding = paddingValues[i % paddingValues.size]
             println("KeySize=$keySize, Padding=$padding")
+            println("Key= " + cipherKey.contentToString())
             val dataSize = if (padding == Padding.NoPadding) 16 else Random.nextInt(32)
             val plainText = Random.nextBytes(dataSize)
             val encryptedText = AES.encryptAesCbc(plainText, cipherKey, iv, padding)
             val decryptedText = AES.decryptAesCbc(encryptedText, cipherKey, iv, padding)
-            println("PlainText=   ${plainText.contentToString()}")
-            println("EncryptText= ${encryptedText.contentToString()}")
-            println("DecryptText= ${decryptedText.contentToString()}")
-            println()
             assertEquals(plainText.toHexStringLower(), decryptedText.toHexStringLower())
         }
     }
