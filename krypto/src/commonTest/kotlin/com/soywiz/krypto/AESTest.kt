@@ -26,7 +26,7 @@ class AESTest {
     @Test
     fun aesEcb() {
         val keySizeArray = intArrayOf(16, 24, 32)
-        val paddingValues = Padding.values()
+        val paddingValues = arrayListOf(Padding.NoPadding, Padding.PKCS7Padding, Padding.ANSIX923Padding, Padding.ISO10126Padding)
         for (i in 0..100) {
             val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
@@ -48,7 +48,7 @@ class AESTest {
     @Test
     fun aecCbc() {
         val keySizeArray = intArrayOf(16, 24, 32)
-        val paddingValues = Padding.values()
+        val paddingValues = arrayListOf(Padding.NoPadding, Padding.PKCS7Padding, Padding.ANSIX923Padding, Padding.ISO10126Padding)
         for (i in 0..100) {
             val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
@@ -72,7 +72,7 @@ class AESTest {
     @Test
     fun aecPcbc() {
         val keySizeArray = intArrayOf(16, 24, 32)
-        val paddingValues = Padding.values()
+        val paddingValues = arrayListOf(Padding.NoPadding, Padding.PKCS7Padding, Padding.ANSIX923Padding, Padding.ISO10126Padding)
         for (i in 0..100) {
             val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
@@ -96,7 +96,7 @@ class AESTest {
     @Test
     fun aesCfb() {
         val keySizeArray = intArrayOf(16, 24, 32)
-        val paddingValues = Padding.values()
+        val paddingValues = arrayListOf(Padding.NoPadding, Padding.PKCS7Padding, Padding.ANSIX923Padding, Padding.ISO10126Padding)
         for (i in 0 .. 100) {
             val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
@@ -120,7 +120,7 @@ class AESTest {
     @Test
     fun aesOfb() {
         val keySizeArray = intArrayOf(16, 24, 32)
-        val paddingValues = Padding.values()
+        val paddingValues = arrayListOf(Padding.NoPadding, Padding.PKCS7Padding, Padding.ANSIX923Padding, Padding.ISO10126Padding)
         for (i in 0 .. 100) {
             val keySize = keySizeArray[i % keySizeArray.size]
             val cipherKey = Random.nextBytes(keySize)
