@@ -16,6 +16,8 @@ abstract class Hasher(val chunkSize: Int, val digestSize: Int) {
 
     fun reset(): Hasher {
         coreReset()
+        writtenInChunk = 0
+        totalWritten = 0L
         return this
     }
 
