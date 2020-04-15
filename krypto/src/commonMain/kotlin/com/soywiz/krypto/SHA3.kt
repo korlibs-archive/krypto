@@ -14,17 +14,19 @@ import com.soywiz.krypto.encoding.Hex
  * @license MIT
  */
 
-private object SHA3Impl {
+@OptIn(ExperimentalUnsignedTypes::class)
+internal object SHA3Impl {
     val SHAKE_PADDING = intArrayOf(31, 7936, 2031616, 520093696)
     val CSHAKE_PADDING = intArrayOf(4, 1024, 262144, 67108864)
     val KECCAK_PADDING = intArrayOf(1, 256, 65536, 16777216)
     val PADDING = intArrayOf(6, 1536, 393216, 100663296)
     val SHIFT = intArrayOf(0, 8, 16, 24)
-    val RC = intArrayOf(1, 0, 32898, 0, 32906, 2147483648, 2147516416, 2147483648, 32907, 0, 2147483649,
-        0, 2147516545, 2147483648, 32777, 2147483648, 138, 0, 136, 0, 2147516425, 0,
-        2147483658, 0, 2147516555, 0, 139, 2147483648, 32905, 2147483648, 32771,
-        2147483648, 32770, 2147483648, 128, 2147483648, 32778, 0, 2147483658, 2147483648,
-        2147516545, 2147483648, 32896, 2147483648, 2147483649, 0, 2147516424, 2147483648)
+    val RC = uintArrayOf(1U, 0U, 32898U, 0U, 32906U, 2147483648U, 2147516416U, 2147483648U, 32907U, 0U, 2147483649U,
+        0U, 2147516545U, 2147483648U, 32777U, 2147483648U, 138U, 0U, 136U, 0U, 2147516425U, 0U,
+        2147483658U, 0U, 2147516555U, 0U, 139U, 2147483648U, 32905U, 2147483648U, 32771U,
+        2147483648U, 32770U, 2147483648U, 128U, 2147483648U, 32778U, 0U, 2147483658U, 2147483648U,
+        2147516545U, 2147483648U, 32896U, 2147483648U, 2147483649U, 0U, 2147516424U, 2147483648U
+    )
     val BITS = intArrayOf(224, 256, 384, 512)
     val SHAKE_BITS = intArrayOf(128, 256)
     val CSHAKE_BYTEPAD = mapOf(
@@ -87,13 +89,13 @@ private object SHA3Impl {
     };
 
     fun createCshakeMethod(bits, padding) {
-        var w = CSHAKE_BYTEPAD[bits];
-        var method = createCshakeOutputMethod(bits, padding, "hex");
+        val w = CSHAKE_BYTEPAD[bits];
+        val method = createCshakeOutputMethod(bits, padding, "hex");
         method.create = { outputBits, n, s ->
             if (!n && !s) {
                 return methods['shake' + bits].create(outputBits);
             } else {
-                return new Keccak(bits, padding, outputBits).bytepad([n, s], w);
+                return Keccak(bits, padding, outputBits).bytepad([n, s], w);
             }
         };
         method.update = { message, outputBits, n, s ->
@@ -103,10 +105,10 @@ private object SHA3Impl {
     };
 
     fun createKmacMethod(bits: Int, padding: Int) {
-        var w = CSHAKE_BYTEPAD[bits];
-        var method = createKmacOutputMethod(bits, padding, "hex");
+        val w = CSHAKE_BYTEPAD[bits];
+        val method = createKmacOutputMethod(bits, padding, "hex");
         method.create = { key, outputBits, s,
-            return new Kmac(bits, padding, outputBits).bytepad(['KMAC', s], w).bytepad([key], w);
+            return Kmac(bits, padding, outputBits).bytepad(['KMAC', s], w).bytepad([key], w);
         };
         method.update = { key, message, outputBits, s ->
             return method.create(key, outputBits, s).update(message);
@@ -144,7 +146,7 @@ private object SHA3Impl {
         }
     }
 
-    open class Keccak(bits: Int, padding: Int, outputBits: Int) {
+    open class Keccak(bits: Int, padding: IntArray, outputBits: Int) {
         var blocks = [];
         var s = IntArray(50)
         var padding = padding;
@@ -159,33 +161,16 @@ private object SHA3Impl {
         var extraBytes = (outputBits and 31) shr 3;
         var lastByteIndex: Int = 0
 
-        fun update(message) {
+        fun update(message: UByteArray): Keccak {
             if (this.finalized) {
-                throw new Error(FINALIZE_ERROR);
+                error("finalize already called");
             }
-            var notString, type = typeof message;
-            if (type !== 'string') {
-                if (type === 'object') {
-                    if (message === null) {
-                        throw new Error(INPUT_ERROR);
-                    } else if (ARRAY_BUFFER && message.constructor === ArrayBuffer) {
-                        message = new Uint8Array(message);
-                    } else if (!Array.isArray(message)) {
-                        if (!ARRAY_BUFFER || !ArrayBuffer.isView(message)) {
-                            throw new Error(INPUT_ERROR);
-                        }
-                    }
-                } else {
-                    throw new Error(INPUT_ERROR);
-                }
-                notString = true;
-            }
-            var blocks = this.blocks
-            var byteCount = this.byteCount
-            var length = message.length,
-            var blockCount = this.blockCount
+            val blocks = this.blocks
+            val byteCount = this.byteCount
+            val length: Int = message.size
+            val blockCount = this.blockCount
             var index = 0
-            var s = this.s
+            val s = this.s
             var i: Int
             var code: Int
 
@@ -199,36 +184,13 @@ private object SHA3Impl {
                         ++i
                     }
                 }
-                if (notString) {
-                    i = this.start
-                    while (index < length && i < byteCount) {
-                        blocks[i shr 2] = blocks[i shr 2] or (message[index] shl SHIFT[i++ and 3])
-                        ++index
-                    }
-                } else {
-                    i = this.start
-                    while (index < length && i < byteCount) {
-                        code = message.charCodeAt(index);
-                        if (code < 0x80) {
-                            blocks[i shr 2] = blocks[i shr 2] or code shl SHIFT[i++ and 3];
-                        } else if (code < 0x800) {
-                            blocks[i shr 2] = blocks[i shr 2] or (0xc0 or (code shr 6)) shl SHIFT[i++ and 3];
-                            blocks[i shr 2] = blocks[i shr 2] or (0x80 or (code and 0x3f)) shl SHIFT[i++ and 3];
-                        } else if (code < 0xd800 || code >= 0xe000) {
-                            blocks[i shr 2] = blocks[i shr 2] or (0xe0 or (code shr 12)) shl SHIFT[i++ and 3];
-                            blocks[i shr 2] = blocks[i shr 2] or (0x80 or ((code shr 6) and 0x3f)) shl SHIFT[i++ and 3];
-                            blocks[i shr 2] = blocks[i shr 2] or (0x80 or (code and 0x3f)) shl SHIFT[i++ and 3];
-                        } else {
-                            code = 0x10000 + (((code and 0x3ff) shl 10) or (message.charCodeAt(++index) and 0x3ff));
-                            blocks[i shr 2] = blocks[i shr 2] or (0xf0 or (code shr 18)) shl SHIFT[i++ and 3];
-                            blocks[i shr 2] = blocks[i shr 2] or (0x80 or ((code shr 12) and 0x3f)) shl SHIFT[i++ and 3];
-                            blocks[i shr 2] = blocks[i shr 2] or (0x80 or ((code shr 6) and 0x3f)) shl SHIFT[i++ and 3];
-                            blocks[i shr 2] = blocks[i shr 2] or (0x80 or (code and 0x3f)) shl SHIFT[i++ and 3];
-                        }
 
-                        ++index
-                    }
+                i = this.start
+                while (index < length && i < byteCount) {
+                    blocks[i shr 2] = blocks[i shr 2] or (message[index].toInt() shl SHIFT[i++ and 3])
+                    ++index
                 }
+
                 this.lastByteIndex = i;
                 if (i >= byteCount) {
                     this.start = i - byteCount;
@@ -247,9 +209,10 @@ private object SHA3Impl {
             return this;
         };
 
-        fun encode(x: Int, right: Boolean): Int {
+        fun encode(x: Int, right: Boolean = false): Int {
             var o = x and 255
             var n = 1;
+            // @TODO: Optimize
             val bytes = arrayListOf<Int>(o);
             var x = x shr 8;
             o = x and 255;
@@ -264,73 +227,34 @@ private object SHA3Impl {
             } else {
                 bytes.add(0, n);
             }
-            this.update(bytes);
+            // @TODO: Optimize
+            this.update(bytes.map { it.toByte() }.toByteArray().asUByteArray());
             return bytes.size;
-        };
+        }
 
-        fun encodeString(str: String) {
-            var notString
-            var type = typeof str;
-            if (type !== 'string') {
-                if (type === 'object') {
-                    if (str === null) {
-                        throw new Error(INPUT_ERROR);
-                    } else if (ARRAY_BUFFER && str.constructor === ArrayBuffer) {
-                        str = new Uint8Array(str);
-                    } else if (!Array.isArray(str)) {
-                        if (!ARRAY_BUFFER || !ArrayBuffer.isView(str)) {
-                            throw new Error(INPUT_ERROR);
-                        }
-                    }
-                } else {
-                    throw new Error(INPUT_ERROR);
-                }
-                notString = true;
-            }
-            var bytes = 0, length = str.length;
-            if (notString) {
-                bytes = length;
-            } else {
-                for (i in 0 until str.length) {
-                    var code = str.charCodeAt(i);
-                    if (code < 0x80) {
-                        bytes += 1;
-                    } else if (code < 0x800) {
-                        bytes += 2;
-                    } else if (code < 0xd800 || code >= 0xe000) {
-                        bytes += 3;
-                    } else {
-                        code = 0x10000 + (((code and 0x3ff) shl 10) or (str.charCodeAt(++i) and 0x3ff));
-                        bytes += 4;
-                    }
-                }
-            }
-            bytes += this.encode(bytes * 8);
+        fun encodeString(str: UByteArray): Int {
+            var bytes: Int = str.size
+            bytes += this.encode(bytes * 8, false);
             this.update(str);
             return bytes;
-        };
+        }
 
-        fun bytepad(strs, w) {
+        fun bytepad(strs: List<UByteArray>, w: Int): Keccak {
             var bytes = this.encode(w);
-            for (var i = 0; i < strs.length; ++i) {
-                bytes += this.encodeString(strs[i]);
-            }
-            var paddingBytes = w - bytes % w;
-            var zeros = [];
-            zeros.length = paddingBytes;
-            this.update(zeros);
+            for (element in strs) bytes += this.encodeString(element)
+            this.update(UByteArray(w - bytes % w));
             return this;
-        };
+        }
 
         open fun finalize() {
             if (this.finalized) {
                 return;
             }
             this.finalized = true;
-            var blocks = this.blocks
-            var i = this.lastByteIndex
-            var blockCount = this.blockCount
-            var s = this.s;
+            val blocks = this.blocks
+            val i = this.lastByteIndex
+            val blockCount = this.blockCount
+            val s = this.s;
             blocks[i shr 2] = blocks[i shr 2] or this.padding[i and 3];
             if (this.lastByteIndex === this.byteCount) {
                 blocks[0] = blocks[blockCount];
@@ -345,94 +269,109 @@ private object SHA3Impl {
             f(s);
         };
 
-        fun hex() {
+        fun hex(): String {
             this.finalize();
             val HEX_CHARS = Hex.DIGITS_LOWER
 
-            var blockCount = this.blockCount, s = this.s, outputBlocks = this.outputBlocks,
+            val blockCount = this.blockCount
+            val s = this.s
+            val outputBlocks = this.outputBlocks
             extraBytes = this.extraBytes
             var i = 0
             var j = 0;
-            var hex = ''
-            var block;
+            var hex = StringBuilder()
+            var block = 0
             while (j < outputBlocks) {
                 i = 0
                 while (i < blockCount && j < outputBlocks) {
                     block = s[i];
-                    hex += HEX_CHARS[(block shr 4) and 0x0F] + HEX_CHARS[block and 0x0F] +
-                    HEX_CHARS[(block shr 12) and 0x0F] + HEX_CHARS[(block shr 8) and 0x0F] +
-                    HEX_CHARS[(block shr 20) and 0x0F] + HEX_CHARS[(block shr 16) and 0x0F] +
-                    HEX_CHARS[(block shr 28) and 0x0F] + HEX_CHARS[(block shr 24) and 0x0F];
+                    hex.append(HEX_CHARS[(block shr 4) and 0x0F])
+                    hex.append(HEX_CHARS[block and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 12) and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 8) and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 20) and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 16) and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 28) and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 24) and 0x0F])
                     ++i
                     ++j
                 }
-                if (j % blockCount === 0) {
+                if (j % blockCount == 0) {
                     f(s);
                     i = 0;
                 }
             }
-            if (extraBytes) {
+            if (extraBytes != 0) {
                 block = s[i];
-                hex += HEX_CHARS[(block shr 4) and 0x0F] + HEX_CHARS[block and 0x0F];
+                hex.append(HEX_CHARS[(block shr 4) and 0x0F])
+                hex.append(HEX_CHARS[block and 0x0F])
                 if (extraBytes > 1) {
-                    hex += HEX_CHARS[(block shr 12) and 0x0F] + HEX_CHARS[(block shr 8) and 0x0F];
+                    hex.append(HEX_CHARS[(block shr 12) and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 8) and 0x0F])
                 }
                 if (extraBytes > 2) {
-                    hex += HEX_CHARS[(block shr 20) and 0x0F] + HEX_CHARS[(block shr 16) and 0x0F];
+                    hex.append(HEX_CHARS[(block shr 20) and 0x0F])
+                    hex.append(HEX_CHARS[(block shr 16) and 0x0F])
                 }
             }
-            return hex;
+            return hex.toString()
         };
 
         fun arrayBuffer() {
             this.finalize();
 
-            var blockCount = this.blockCount, s = this.s, outputBlocks = this.outputBlocks,
-            extraBytes = this.extraBytes, i = 0, j = 0;
-            var bytes = this.outputBits shr 3;
-            var buffer;
-            if (extraBytes) {
-                buffer = new ArrayBuffer((outputBlocks + 1) shl 2);
-            } else {
-                buffer = new ArrayBuffer(bytes);
+            val blockCount = this.blockCount
+            val s = this.s
+            val outputBlocks = this.outputBlocks
+            extraBytes = this.extraBytes
+            var i = 0
+            var j = 0;
+            val bytes = this.outputBits shr 3;
+            val array: UIntArray = when {
+                extraBytes != 0 -> UIntArray((outputBlocks + 1))
+                else -> UIntArray(bytes / 4)
             }
-            var array = new Uint32Array(buffer);
             while (j < outputBlocks) {
-                for (i = 0; i < blockCount && j < outputBlocks; ++i, ++j) {
-                    array[j] = s[i];
+                i = 0
+                while (i < blockCount && j < outputBlocks) {
+                    array[j] = s[i].toUInt()
+                    ++i
+                    ++j
                 }
-                if (j % blockCount === 0) {
+                if (j % blockCount == 0) {
                     f(s);
                 }
             }
-            if (extraBytes) {
-                array[i] = s[i];
+            if (extraBytes != 0) {
+                array[i] = s[i].toUInt();
                 buffer = buffer.slice(0, bytes);
             }
             return buffer;
         };
 
-        val buffer get() = arrayBuffer;
+        val buffer: UByteArray
 
-        fun digest(): ByteArray {
+        fun digest(): UByteArray {
             this.finalize();
 
-            var blockCount = this.blockCount, s = this.s, outputBlocks = this.outputBlocks,
+            val blockCount = this.blockCount
+            val s = this.s
+            val outputBlocks = this.outputBlocks,
             extraBytes = this.extraBytes
             var i = 0
             var j = 0;
-            var array = []
-            var offset
-            var block;
+            val array: UByteArray = []
+            var offset: Int
+            var block: Int
             while (j < outputBlocks) {
                 i = 0
                 while (i < blockCount && j < outputBlocks) {
                     offset = j shl 2;
                     block = s[i];
-                    array[offset] = block and 0xFF;
-                    array[offset + 1] = (block shr 8) and 0xFF;
-                    array[offset + 2] = (block shr 16) and 0xFF;
-                    array[offset + 3] = (block shr 24) and 0xFF;
+                    array[offset + 0] = ((block shr 0) and 0xFF).toUByte()
+                    array[offset + 1] = ((block shr 8) and 0xFF).toUByte()
+                    array[offset + 2] = ((block shr 16) and 0xFF).toUByte()
+                    array[offset + 3] = ((block shr 24) and 0xFF).toUByte()
                     ++i
                     ++j
                 }
@@ -443,12 +382,12 @@ private object SHA3Impl {
             if (extraBytes != 0) {
                 offset = j shl 2;
                 block = s[i];
-                array[offset] = block and 0xFF;
+                array[offset] = (block and 0xFF).toUByte();
                 if (extraBytes > 1) {
-                    array[offset + 1] = (block shr 8) and 0xFF;
+                    array[offset + 1] = ((block shr 8) and 0xFF).toUByte();
                 }
                 if (extraBytes > 2) {
-                    array[offset + 2] = (block shr 16) and 0xFF;
+                    array[offset + 2] = ((block shr 16) and 0xFF).toUByte()
                 }
             }
             return array;
@@ -456,7 +395,7 @@ private object SHA3Impl {
 
     }
 
-    class Kmac(bits: Int, padding: Int, outputBits: Int) : Keccak(bits, padding, outputBits) {
+    class Kmac(bits: Int, padding: IntArray, outputBits: Int) : Keccak(bits, padding, outputBits) {
         override fun finalize() {
             this.encode(this.outputBits, true);
             return super.finalize()
@@ -464,10 +403,9 @@ private object SHA3Impl {
     }
 
 
-    fun f (s) {
+    fun f(s: IntArray) {
         var h = 0
         var l = 0
-        var n = 0
         var c0 = 0
         var c1 = 0
         var c2 = 0
@@ -542,64 +480,64 @@ private object SHA3Impl {
     
             h = c8 xor ((c2 shl 1) or (c3 ushr 31));
             l = c9 xor ((c3 shl 1) or (c2 ushr 31));
-            s[0] ^= h;
-            s[1] ^= l;
-            s[10] ^= h;
-            s[11] ^= l;
-            s[20] ^= h;
-            s[21] ^= l;
-            s[30] ^= h;
-            s[31] ^= l;
-            s[40] ^= h;
-            s[41] ^= l;
+            s[0] = s[0] xor h;
+            s[1] = s[1] xor l;
+            s[10] = s[10] xor h;
+            s[11] = s[11] xor l;
+            s[20] = s[20] xor h;
+            s[21] = s[21] xor l;
+            s[30] = s[30] xor h;
+            s[31] = s[31] xor l;
+            s[40] = s[40] xor h;
+            s[41] = s[41] xor l;
             h = c0 xor ((c4 shl 1) or (c5 ushr 31));
             l = c1 xor ((c5 shl 1) or (c4 ushr 31));
-            s[2] ^= h;
-            s[3] ^= l;
-            s[12] ^= h;
-            s[13] ^= l;
-            s[22] ^= h;
-            s[23] ^= l;
-            s[32] ^= h;
-            s[33] ^= l;
-            s[42] ^= h;
-            s[43] ^= l;
+            s[2] = s[2] xor h;
+            s[3] = s[3] xor l;
+            s[12] = s[12] xor h;
+            s[13] = s[13] xor l;
+            s[22] = s[22] xor h;
+            s[23] = s[23] xor l;
+            s[32] = s[32] xor h;
+            s[33] = s[33] xor l;
+            s[42] = s[42] xor h;
+            s[43] = s[43] xor l;
             h = c2 xor ((c6 shl 1) or (c7 ushr 31));
             l = c3 xor ((c7 shl 1) or (c6 ushr 31));
-            s[4] ^= h;
-            s[5] ^= l;
-            s[14] ^= h;
-            s[15] ^= l;
-            s[24] ^= h;
-            s[25] ^= l;
-            s[34] ^= h;
-            s[35] ^= l;
-            s[44] ^= h;
-            s[45] ^= l;
+            s[4] = s[4] xor h;
+            s[5] = s[5] xor l;
+            s[14] = s[14] xor h;
+            s[15] = s[15] xor l;
+            s[24] = s[24] xor h;
+            s[25] = s[25] xor l;
+            s[34] = s[34] xor h;
+            s[35] = s[35] xor l;
+            s[44] = s[44] xor h;
+            s[45] = s[45] xor l;
             h = c4 xor ((c8 shl 1) or (c9 ushr 31));
             l = c5 xor ((c9 shl 1) or (c8 ushr 31));
-            s[6] ^= h;
-            s[7] ^= l;
-            s[16] ^= h;
-            s[17] ^= l;
-            s[26] ^= h;
-            s[27] ^= l;
-            s[36] ^= h;
-            s[37] ^= l;
-            s[46] ^= h;
-            s[47] ^= l;
+            s[6] = s[6] xor h;
+            s[7] = s[7] xor l;
+            s[16] = s[16] xor h;
+            s[17] = s[17] xor l;
+            s[26] = s[26] xor h;
+            s[27] = s[27] xor l;
+            s[36] = s[36] xor h;
+            s[37] = s[37] xor l;
+            s[46] = s[46] xor h;
+            s[47] = s[47] xor l;
             h = c6 xor ((c0 shl 1) or (c1 ushr 31));
             l = c7 xor ((c1 shl 1) or (c0 ushr 31));
-            s[8] ^= h;
-            s[9] ^= l;
-            s[18] ^= h;
-            s[19] ^= l;
-            s[28] ^= h;
-            s[29] ^= l;
-            s[38] ^= h;
-            s[39] ^= l;
-            s[48] ^= h;
-            s[49] ^= l;
+            s[8] = s[8] xor h;
+            s[9] = s[9] xor l;
+            s[18] = s[18] xor h;
+            s[19] = s[19] xor l;
+            s[28] = s[28] xor h;
+            s[29] = s[29] xor l;
+            s[38] = s[38] xor h;
+            s[39] = s[39] xor l;
+            s[48] = s[48] xor h;
+            s[49] = s[49] xor l;
     
             b0 = s[0];
             b1 = s[1];
@@ -703,8 +641,8 @@ private object SHA3Impl {
             s[48] = b48 xor (b40.inv() and b42);
             s[49] = b49 xor (b41.inv() and b43);
     
-            s[0] = s[0] xor RC[n];
-            s[1] = s[1] xor RC[n + 1];
+            s[0] = s[0] xor RC[n].toInt();
+            s[1] = s[1] xor RC[n + 1].toInt();
         }
     };
 }
