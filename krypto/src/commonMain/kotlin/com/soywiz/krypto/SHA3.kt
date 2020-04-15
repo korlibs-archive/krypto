@@ -2,7 +2,42 @@
 
 package com.soywiz.krypto
 
+import com.soywiz.krypto.annotations.KryptoExperimental
 import com.soywiz.krypto.encoding.Hex
+
+@KryptoExperimental
+class SHA3_256 : SHA3(16, 256) {
+}
+
+@KryptoExperimental
+abstract class SHA3 internal constructor(chunkSize: Int, val digestSizeBits: Int) : Hasher(chunkSize, digestSizeBits / 8) {
+    private lateinit var keccak: SHA3Impl.Keccak
+
+    init {
+        coreReset()
+    }
+
+    // @TODO: Actual reset
+    override fun coreReset() {
+        keccak = SHA3Impl.Keccak(digestSizeBits, SHA3Impl.KECCAK_PADDING, digestSizeBits)
+    }
+
+    override fun corePadding(totalWritten: Long): ByteArray {
+        //TODO("Not yet implemented")
+        //return ByteArray(0)
+        keccak.finalize()
+        return ByteArray(0)
+    }
+
+    override fun coreUpdate(chunk: ByteArray) {
+        keccak.update(chunk.asUByteArray())
+    }
+
+    override fun coreDigest(out: ByteArray) {
+        val data = keccak.digest()
+        data.copyInto(out.asUByteArray())
+    }
+}
 
 // https://github.com/emn178/js-sha3/blob/master/src/sha3.js
 /**
@@ -163,7 +198,7 @@ internal object SHA3Impl {
     */
 
     open class Keccak(bits: Int, var padding: IntArray, var outputBits: Int) {
-        private var blocks = arrayListOf<Int>()
+        private var blocks = IntArray(50)
         private var buffer = UByteArray(bits / 8)
         private var s = IntArray(50)
         private var reset = true
@@ -365,7 +400,7 @@ internal object SHA3Impl {
             val extraBytes = this.extraBytes
             var i = 0
             var j = 0
-            val array = UByteArray(0)
+            val array = UByteArray(outputBlocks * 4)
             var offset: Int
             var block: Int
             while (j < outputBlocks) {
@@ -481,8 +516,8 @@ internal object SHA3Impl {
             s[48] = s[48] xor h
             s[49] = s[49] xor l
 
-            val b0 = s[0]
-            val b1 = s[1]
+            val b00 = s[0]
+            val b01 = s[1]
             val b32 = (s[11] shl 4) or (s[10] ushr 28)
             val b33 = (s[10] shl 4) or (s[11] ushr 28)
             val b14 = (s[20] shl 3) or (s[21] ushr 29)
@@ -493,8 +528,8 @@ internal object SHA3Impl {
             val b29 = (s[41] shl 18) or (s[40] ushr 14)
             val b20 = (s[2] shl 1) or (s[3] ushr 31)
             val b21 = (s[3] shl 1) or (s[2] ushr 31)
-            val b2 = (s[13] shl 12) or (s[12] ushr 20)
-            val b3 = (s[12] shl 12) or (s[13] ushr 20)
+            val b02 = (s[13] shl 12) or (s[12] ushr 20)
+            val b03 = (s[12] shl 12) or (s[13] ushr 20)
             val b34 = (s[22] shl 10) or (s[23] ushr 22)
             val b35 = (s[23] shl 10) or (s[22] ushr 22)
             val b16 = (s[33] shl 13) or (s[32] ushr 19)
@@ -505,8 +540,8 @@ internal object SHA3Impl {
             val b41 = (s[4] shl 30) or (s[5] ushr 2)
             val b22 = (s[14] shl 6) or (s[15] ushr 26)
             val b23 = (s[15] shl 6) or (s[14] ushr 26)
-            val b4 = (s[25] shl 11) or (s[24] ushr 21)
-            val b5 = (s[24] shl 11) or (s[25] ushr 21)
+            val b04 = (s[25] shl 11) or (s[24] ushr 21)
+            val b05 = (s[24] shl 11) or (s[25] ushr 21)
             val b36 = (s[34] shl 15) or (s[35] ushr 17)
             val b37 = (s[35] shl 15) or (s[34] ushr 17)
             val b18 = (s[45] shl 29) or (s[44] ushr 3)
@@ -517,8 +552,8 @@ internal object SHA3Impl {
             val b43 = (s[16] shl 23) or (s[17] ushr 9)
             val b24 = (s[26] shl 25) or (s[27] ushr 7)
             val b25 = (s[27] shl 25) or (s[26] ushr 7)
-            val b6 = (s[36] shl 21) or (s[37] ushr 11)
-            val b7 = (s[37] shl 21) or (s[36] ushr 11)
+            val b06 = (s[36] shl 21) or (s[37] ushr 11)
+            val b07 = (s[37] shl 21) or (s[36] ushr 11)
             val b38 = (s[47] shl 24) or (s[46] ushr 8)
             val b39 = (s[46] shl 24) or (s[47] ushr 8)
             val b30 = (s[8] shl 27) or (s[9] ushr 5)
@@ -529,11 +564,11 @@ internal object SHA3Impl {
             val b45 = (s[28] shl 7) or (s[29] ushr 25)
             val b26 = (s[38] shl 8) or (s[39] ushr 24)
             val b27 = (s[39] shl 8) or (s[38] ushr 24)
-            val b8 = (s[48] shl 14) or (s[49] ushr 18)
-            val b9 = (s[49] shl 14) or (s[48] ushr 18)
+            val b08 = (s[48] shl 14) or (s[49] ushr 18)
+            val b09 = (s[49] shl 14) or (s[48] ushr 18)
 
-            s[0] = b0 xor (b2.inv() and b4)
-            s[1] = b1 xor (b3.inv() and b5)
+            s[0] = b00 xor (b02.inv() and b04)
+            s[1] = b01 xor (b03.inv() and b05)
             s[10] = b10 xor (b12.inv() and b14)
             s[11] = b11 xor (b13.inv() and b15)
             s[20] = b20 xor (b22.inv() and b24)
@@ -542,8 +577,8 @@ internal object SHA3Impl {
             s[31] = b31 xor (b33.inv() and b35)
             s[40] = b40 xor (b42.inv() and b44)
             s[41] = b41 xor (b43.inv() and b45)
-            s[2] = b2 xor (b4.inv() and b6)
-            s[3] = b3 xor (b5.inv() and b7)
+            s[2] = b02 xor (b04.inv() and b06)
+            s[3] = b03 xor (b05.inv() and b07)
             s[12] = b12 xor (b14.inv() and b16)
             s[13] = b13 xor (b15.inv() and b17)
             s[22] = b22 xor (b24.inv() and b26)
@@ -552,8 +587,8 @@ internal object SHA3Impl {
             s[33] = b33 xor (b35.inv() and b37)
             s[42] = b42 xor (b44.inv() and b46)
             s[43] = b43 xor (b45.inv() and b47)
-            s[4] = b4 xor (b6.inv() and b8)
-            s[5] = b5 xor (b7.inv() and b9)
+            s[4] = b04 xor (b06.inv() and b08)
+            s[5] = b05 xor (b07.inv() and b09)
             s[14] = b14 xor (b16.inv() and b18)
             s[15] = b15 xor (b17.inv() and b19)
             s[24] = b24 xor (b26.inv() and b28)
@@ -562,8 +597,8 @@ internal object SHA3Impl {
             s[35] = b35 xor (b37.inv() and b39)
             s[44] = b44 xor (b46.inv() and b48)
             s[45] = b45 xor (b47.inv() and b49)
-            s[6] = b6 xor (b8.inv() and b0)
-            s[7] = b7 xor (b9.inv() and b1)
+            s[6] = b06 xor (b08.inv() and b00)
+            s[7] = b07 xor (b09.inv() and b01)
             s[16] = b16 xor (b18.inv() and b10)
             s[17] = b17 xor (b19.inv() and b11)
             s[26] = b26 xor (b28.inv() and b20)
@@ -572,8 +607,8 @@ internal object SHA3Impl {
             s[37] = b37 xor (b39.inv() and b31)
             s[46] = b46 xor (b48.inv() and b40)
             s[47] = b47 xor (b49.inv() and b41)
-            s[8] = b8 xor (b0.inv() and b2)
-            s[9] = b9 xor (b1.inv() and b3)
+            s[8] = b08 xor (b00.inv() and b02)
+            s[9] = b09 xor (b01.inv() and b03)
             s[18] = b18 xor (b10.inv() and b12)
             s[19] = b19 xor (b11.inv() and b13)
             s[28] = b28 xor (b20.inv() and b22)
