@@ -1,42 +1,49 @@
 package com.soywiz.krypto.encoding
 
 object Base64 {
-    private val TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-    private val DECODE = IntArray(0x100).apply {
-        for (n in 0..255) this[n] = -1
-        for (n in 0 until TABLE.length) {
-            this[TABLE[n].toInt()] = n
-        }
-    }
+    private const val TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    private const val TABLE_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_="
 
     operator fun invoke(v: String) = decodeIgnoringSpaces(v)
     operator fun invoke(v: ByteArray) = encode(v)
 
-    fun decode(str: String): ByteArray {
+    fun decode(str: String, isUrlSafe: Boolean = false): ByteArray {
         val src = ByteArray(str.length) { str[it].toByte() }
         val dst = ByteArray(src.size)
-        return dst.copyOf(decode(src, dst))
+        return dst.copyOf(decode(src, dst, isUrlSafe))
     }
 
-    fun decodeIgnoringSpaces(str: String): ByteArray {
-        return decode(str.replace(" ", "").replace("\n", "").replace("\r", ""))
+    fun decodeIgnoringSpaces(str: String, isUrlSafe: Boolean = false): ByteArray {
+        return decode(str.replace(" ", "").replace("\n", "").replace("\r", ""), isUrlSafe)
     }
 
-    fun decode(src: ByteArray, dst: ByteArray): Int {
+    fun decode(src: ByteArray, dst: ByteArray, isUrlSafe: Boolean = false): Int {
+        val decoder = IntArray(0x100).apply {
+            val table = if (isUrlSafe) {
+                TABLE_SAFE
+            } else {
+                TABLE
+            }
+            for (n in 0..255) this[n] = -1
+            for (n in table.indices) {
+                this[table[n].toInt()] = n
+            }
+        }
+
         var m = 0
 
         var n = 0
         while (n < src.size) {
-            val d = DECODE[src.readU8(n)]
+            val d = decoder[src.readU8(n)]
             if (d < 0) {
                 n++
                 continue // skip character
             }
 
-            val b0 = DECODE[src.readU8(n++)]
-            val b1 = DECODE[src.readU8(n++)]
-            val b2 = DECODE[src.readU8(n++)]
-            val b3 = DECODE[src.readU8(n++)]
+            val b0 = decoder[src.readU8(n++)]
+            val b1 = decoder[src.readU8(n++)]
+            val b2 = decoder[src.readU8(n++)]
+            val b3 = decoder[src.readU8(n++)]
             dst[m++] = (b0 shl 2 or (b1 shr 4)).toByte()
             if (b2 < 64) {
                 dst[m++] = (b1 shl 4 or (b2 shr 2)).toByte()
@@ -49,7 +56,12 @@ object Base64 {
     }
 
     @Suppress("UNUSED_CHANGED_VALUE")
-    fun encode(src: ByteArray): String {
+    fun encode(src: ByteArray, isUrlSafe: Boolean = false): String {
+        val table = if (isUrlSafe) {
+            TABLE_SAFE
+        } else {
+            TABLE
+        }
         val out = StringBuilder((src.size * 4) / 3 + 4)
         var ipos = 0
         val extraBytes = src.size % 3
@@ -57,23 +69,23 @@ object Base64 {
             val num = src.readU24BE(ipos)
             ipos += 3
 
-            out.append(TABLE[(num ushr 18) and 0x3F])
-            out.append(TABLE[(num ushr 12) and 0x3F])
-            out.append(TABLE[(num ushr 6) and 0x3F])
-            out.append(TABLE[(num ushr 0) and 0x3F])
+            out.append(table[(num ushr 18) and 0x3F])
+            out.append(table[(num ushr 12) and 0x3F])
+            out.append(table[(num ushr 6) and 0x3F])
+            out.append(table[(num ushr 0) and 0x3F])
         }
 
         if (extraBytes == 1) {
             val num = src.readU8(ipos++)
-            out.append(TABLE[num ushr 2])
-            out.append(TABLE[(num shl 4) and 0x3F])
+            out.append(table[num ushr 2])
+            out.append(table[(num shl 4) and 0x3F])
             out.append('=')
             out.append('=')
         } else if (extraBytes == 2) {
             val tmp = (src.readU8(ipos++) shl 8) or src.readU8(ipos++)
-            out.append(TABLE[tmp ushr 10])
-            out.append(TABLE[(tmp ushr 4) and 0x3F])
-            out.append(TABLE[(tmp shl 2) and 0x3F])
+            out.append(table[tmp ushr 10])
+            out.append(table[(tmp ushr 4) and 0x3F])
+            out.append(table[(tmp shl 2) and 0x3F])
             out.append('=')
         }
 
@@ -86,6 +98,10 @@ object Base64 {
 }
 
 fun String.fromBase64IgnoreSpaces(): ByteArray = Base64.decode(this.replace(" ", "").replace("\n", "").replace("\r", ""))
+fun String.fromBase64UrlIgnoreSpaces(): ByteArray = Base64.decode(this.replace(" ", "").replace("\n", "").replace("\r", ""), true)
 fun String.fromBase64(ignoreSpaces: Boolean = false): ByteArray = if (ignoreSpaces) Base64.decodeIgnoringSpaces(this) else Base64.decode(this)
+fun String.fromBase64UrlSafe(ignoreSpaces: Boolean = false): ByteArray = if(ignoreSpaces) Base64.decodeIgnoringSpaces(this, true) else Base64.decode(this, true)
 fun ByteArray.toBase64(): String = Base64.encode(this)
+fun ByteArray.toBase64UrlSafe(): String = Base64.encode(this, true)
 val ByteArray.base64: String get() = Base64.encode(this)
+val ByteArray.base64UrlSafe: String get() = Base64.encode(this, true)
