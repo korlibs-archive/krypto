@@ -4,6 +4,20 @@ object Base64 {
     private const val TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
     private const val TABLE_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_="
 
+    private val decoder = IntArray(0x100).apply {
+        for (n in 0..255) this[n] = -1
+        for (n in TABLE.indices) {
+            this[TABLE[n].toInt()] = n
+        }
+    }
+
+    private val decoderUrlSafe = IntArray(0x100).apply {
+        for (n in 0..255) this[n] = -1
+        for (n in TABLE_SAFE.indices) {
+            this[TABLE_SAFE[n].toInt()] = n
+        }
+    }
+
     operator fun invoke(v: String) = decodeIgnoringSpaces(v)
     operator fun invoke(v: ByteArray) = encode(v)
 
@@ -18,16 +32,11 @@ object Base64 {
     }
 
     fun decode(src: ByteArray, dst: ByteArray, isUrlSafe: Boolean = false): Int {
-        val decoder = IntArray(0x100).apply {
-            val table = if (isUrlSafe) {
-                TABLE_SAFE
-            } else {
-                TABLE
-            }
-            for (n in 0..255) this[n] = -1
-            for (n in table.indices) {
-                this[table[n].toInt()] = n
-            }
+
+        val decoder = if(isUrlSafe) {
+            decoderUrlSafe
+        } else {
+            decoder
         }
 
         var m = 0
