@@ -17,24 +17,20 @@ object Base64 {
     operator fun invoke(v: String) = decodeIgnoringSpaces(v)
     operator fun invoke(v: ByteArray) = encode(v)
 
-    fun decode(str: String): ByteArray {
+    fun decode(str: String): ByteArray = decode(str, DECODER)
+
+    fun decodeUrlSafe(str: String): ByteArray = decode(str, DECODER_URLSAFE)
+
+    fun decodeIgnoringSpaces(str: String): ByteArray = decode(str.removeSpaces())
+
+    fun decodeUrlSafeIgnoringSpaces(str: String): ByteArray = decodeUrlSafe(str.removeSpaces())
+
+    private fun String.removeSpaces() = this.replace(" ", "").replace("\n", "").replace("\r", "")
+
+    private fun decode(str: String, decoder: IntArray): ByteArray {
         val src = ByteArray(str.length) { str[it].toByte() }
         val dst = ByteArray(src.size)
-        return dst.copyOf(decode(src, dst, DECODER))
-    }
-
-    fun decodeUrlSafe(str: String): ByteArray {
-        val src = ByteArray(str.length) { str[it].toByte() }
-        val dst = ByteArray(src.size)
-        return dst.copyOf(decode(src, dst, DECODER_URLSAFE))
-    }
-
-    fun decodeIgnoringSpaces(str: String): ByteArray {
-        return decode(str.replace(" ", "").replace("\n", "").replace("\r", ""))
-    }
-
-    fun decodeUrlSafeIgnoringSpaces(str: String): ByteArray {
-        return decodeUrlSafe(str.replace(" ", "").replace("\n", "").replace("\r", ""))
+        return dst.copyOf(decode(src, dst, decoder))
     }
 
     private fun decode(src: ByteArray, dst: ByteArray, decoder: IntArray): Int {
