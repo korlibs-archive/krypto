@@ -1,43 +1,43 @@
 package com.soywiz.krypto.encoding
 
 object Base64 {
-    private const val TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
-    private const val TABLE_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_="
+    private const val ENCODE_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    private const val ENCODE_TABLE_URLSAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_="
 
-    private val decoder = IntArray(0x100).apply {
-        for (n in 0..255) this[n] = -1
-        for (n in TABLE.indices) {
-            this[TABLE[n].toInt()] = n
-        }
-    }
+    private val DECODER = createDecoder(ENCODE_TABLE)
 
-    private val decoderUrlSafe = IntArray(0x100).apply {
-        for (n in 0..255) this[n] = -1
-        for (n in TABLE_SAFE.indices) {
-            this[TABLE_SAFE[n].toInt()] = n
+    private val DECODER_URLSAFE = createDecoder(ENCODE_TABLE_URLSAFE)
+
+    private fun createDecoder(table: String): IntArray = IntArray(0x100){ -1 }.apply {
+        for (n in table.indices) {
+            this[table[n].toInt()] = n
         }
     }
 
     operator fun invoke(v: String) = decodeIgnoringSpaces(v)
     operator fun invoke(v: ByteArray) = encode(v)
 
-    fun decode(str: String, isUrlSafe: Boolean = false): ByteArray {
+    fun decode(str: String): ByteArray {
         val src = ByteArray(str.length) { str[it].toByte() }
         val dst = ByteArray(src.size)
-        return dst.copyOf(decode(src, dst, isUrlSafe))
+        return dst.copyOf(decode(src, dst, DECODER))
     }
 
-    fun decodeIgnoringSpaces(str: String, isUrlSafe: Boolean = false): ByteArray {
-        return decode(str.replace(" ", "").replace("\n", "").replace("\r", ""), isUrlSafe)
+    fun decodeUrlSafe(str: String): ByteArray {
+        val src = ByteArray(str.length) { str[it].toByte() }
+        val dst = ByteArray(src.size)
+        return dst.copyOf(decode(src, dst, DECODER_URLSAFE))
     }
 
-    fun decode(src: ByteArray, dst: ByteArray, isUrlSafe: Boolean = false): Int {
+    fun decodeIgnoringSpaces(str: String): ByteArray {
+        return decode(str.replace(" ", "").replace("\n", "").replace("\r", ""))
+    }
 
-        val decoder = if(isUrlSafe) {
-            decoderUrlSafe
-        } else {
-            decoder
-        }
+    fun decodeUrlSafeIgnoringSpaces(str: String): ByteArray {
+        return decodeUrlSafe(str.replace(" ", "").replace("\n", "").replace("\r", ""))
+    }
+
+    private fun decode(src: ByteArray, dst: ByteArray, decoder: IntArray): Int {
 
         var m = 0
 
@@ -64,13 +64,18 @@ object Base64 {
         return m
     }
 
+    fun encode(src: ByteArray): String {
+        return encode(src, ENCODE_TABLE)
+    }
+
+    fun encodeUrlSafe(src: ByteArray): String {
+        return encode(src, ENCODE_TABLE_URLSAFE)
+    }
+
+
     @Suppress("UNUSED_CHANGED_VALUE")
-    fun encode(src: ByteArray, isUrlSafe: Boolean = false): String {
-        val table = if (isUrlSafe) {
-            TABLE_SAFE
-        } else {
-            TABLE
-        }
+    private fun encode(src: ByteArray, table: String): String {
+
         val out = StringBuilder((src.size * 4) / 3 + 4)
         var ipos = 0
         val extraBytes = src.size % 3
@@ -106,11 +111,11 @@ object Base64 {
         (readU8(index + 0) shl 16) or (readU8(index + 1) shl 8) or (readU8(index + 2) shl 0)
 }
 
-fun String.fromBase64IgnoreSpaces(): ByteArray = Base64.decode(this.replace(" ", "").replace("\n", "").replace("\r", ""))
-fun String.fromBase64UrlIgnoreSpaces(): ByteArray = Base64.decode(this.replace(" ", "").replace("\n", "").replace("\r", ""), true)
+fun String.fromBase64IgnoreSpaces(): ByteArray = Base64.decodeIgnoringSpaces(this)
+fun String.fromBase64UrlSafeIgnoreSpaces(): ByteArray = Base64.decodeUrlSafeIgnoringSpaces(this)
 fun String.fromBase64(ignoreSpaces: Boolean = false): ByteArray = if (ignoreSpaces) Base64.decodeIgnoringSpaces(this) else Base64.decode(this)
-fun String.fromBase64UrlSafe(ignoreSpaces: Boolean = false): ByteArray = if(ignoreSpaces) Base64.decodeIgnoringSpaces(this, true) else Base64.decode(this, true)
+fun String.fromBase64UrlSafe(ignoreSpaces: Boolean = false): ByteArray = if(ignoreSpaces) Base64.decodeUrlSafeIgnoringSpaces(this) else Base64.decodeUrlSafe(this)
 fun ByteArray.toBase64(): String = Base64.encode(this)
-fun ByteArray.toBase64UrlSafe(): String = Base64.encode(this, true)
+fun ByteArray.toBase64UrlSafe(): String = Base64.encodeUrlSafe(this)
 val ByteArray.base64: String get() = Base64.encode(this)
-val ByteArray.base64UrlSafe: String get() = Base64.encode(this, true)
+val ByteArray.base64UrlSafe: String get() = Base64.encodeUrlSafe(this)

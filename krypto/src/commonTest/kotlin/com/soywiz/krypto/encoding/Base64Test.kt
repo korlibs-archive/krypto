@@ -56,7 +56,7 @@ class Base64Test {
     @Test
     fun shouldDecodeBase64UrlIgnoringSpaces() {
         val expectedSafe = "aaa/test?&=a"
-        val actualSafe = ASCII("YWFh\nL3Rlc3Q_Jj1h".fromBase64UrlIgnoreSpaces())
+        val actualSafe = ASCII("YWFh\nL3Rlc3Q_Jj1h".fromBase64UrlSafeIgnoreSpaces())
 
         assertEquals(expectedSafe, actualSafe)
     }
