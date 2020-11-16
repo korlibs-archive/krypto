@@ -6,9 +6,7 @@ import kotlin.random.Random
 expect fun fillRandomBytes(array: ByteArray)
 var randomUnittesting = false
 
-open class SecureRandom : Random() {
-
-    companion object : SecureRandom()
+object SecureRandom : Random() {
 
     private fun getInt(): Int {
         val temp = ByteArray(4)
