@@ -6,7 +6,7 @@
 <p align="center">
 	<a href="https://github.com/korlibs/krypto/actions"><img alt="Build Status" src="https://github.com/korlibs/krypto/workflows/CI/badge.svg" /></a>
 	<a href="https://bintray.com/korlibs/korlibs/krypto"><img alt="Maven Version" src="https://img.shields.io/bintray/v/korlibs/korlibs/krypto.svg?style=flat&label=maven" /></a>
-	<a href="https://slack.soywiz.com/"><img alt="Slack" src="https://img.shields.io/badge/chat-on%20slack-green?style=flat&logo=slack" /></a>
+	<a href="https://discord.korge.org/"><img alt="Discord" src="https://img.shields.io/discord/728582275884908604?logo=discord" /></a>
 </p>
 <!-- /BADGES -->
 
