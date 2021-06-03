@@ -9,3 +9,5 @@
 	<a href="https://discord.korge.org/"><img alt="Discord" src="https://img.shields.io/discord/728582275884908604?logo=discord" /></a>
 </p>
 <!-- /BADGES -->
+
+### Full Documentation: <https://korlibs.soywiz.com/krypto/>
