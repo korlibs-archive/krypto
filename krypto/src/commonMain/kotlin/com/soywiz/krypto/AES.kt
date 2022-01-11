@@ -195,12 +195,12 @@ class AES(val keyWords: IntArray) {
             return dstIV
         }
 
-        fun encryptAes128Cbc(data: ByteArray, key: ByteArray, padding: Padding = Padding.NoPadding): ByteArray {
-            return encryptAesCbc(data, key, ByteArray(16), padding)
+        fun encryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = Padding.NoPadding): ByteArray {
+            return encryptAesCbc(data, key, iv, padding)
         }
 
-        fun decryptAes128Cbc(data: ByteArray, key: ByteArray, padding: Padding = Padding.NoPadding): ByteArray {
-            return decryptAesCbc(data, key, ByteArray(16), padding)
+        fun decryptAes128Cbc(data: ByteArray, key: ByteArray, iv: ByteArray = ByteArray(16), padding: Padding = Padding.NoPadding): ByteArray {
+            return decryptAesCbc(data, key, iv, padding)
         }
 
         fun encryptAesEcb(data: ByteArray, key: ByteArray, padding: Padding): ByteArray {
@@ -232,6 +232,10 @@ class AES(val keyWords: IntArray) {
             val words = pData.toIntArray()
             val wordsLength = words.size
             val ivWords = getIV(iv).toIntArray()
+
+            if (words.size % 4 != 0) {
+                throw IllegalArgumentException("Data is not multiple of $BLOCK_SIZE, and padding was set to ${Padding.NoPadding}")
+            }
 
             var s0 = ivWords[0]
             var s1 = ivWords[1]
